@@ -1,0 +1,6 @@
+{
+  "name": "HUMAN.exe — The Accountability Protocol",
+  "description": "An interactive software engineering simulation evaluating AI operational recommendations and accountability in high-stakes incidents.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

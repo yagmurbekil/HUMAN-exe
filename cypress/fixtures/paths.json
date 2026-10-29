@@ -1,0 +1,90 @@
+[
+  {
+    "pathId": "PATH-1",
+    "description": "Tamamen Güvenli Yol (All Safe)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_VERIFY_SCHEMA" },
+      { "id": "D2", "choice": "D2_SMOKE_TEST" },
+      { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
+    ],
+    "expectedFlags": [],
+    "expectedEnding": "SAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-2",
+    "description": "Yalnızca Gizlilik Riski (Privacy Risk Only)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_VERIFY_SCHEMA" },
+      { "id": "D2", "choice": "D2_SMOKE_TEST" },
+      { "id": "D3", "choice": "D3_SHARE_RAW" }
+    ],
+    "expectedFlags": ["PRIVACY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-3",
+    "description": "Yalnızca Doğrulama Riski (Verify Risk Only)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_VERIFY_SCHEMA" },
+      { "id": "D2", "choice": "D2_DEPLOY_NOW" },
+      { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
+    ],
+    "expectedFlags": ["VERIFY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-4",
+    "description": "Doğrulama ve Gizlilik Riski (Verify + Privacy Risk)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_VERIFY_SCHEMA" },
+      { "id": "D2", "choice": "D2_DEPLOY_NOW" },
+      { "id": "D3", "choice": "D3_SHARE_RAW" }
+    ],
+    "expectedFlags": ["VERIFY_RISK", "PRIVACY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-5",
+    "description": "Yalnızca Mimari Risk (Arch Risk Only)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_ROLLBACK_NOW" },
+      { "id": "D2", "choice": "D2_SMOKE_TEST" },
+      { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
+    ],
+    "expectedFlags": ["ARCH_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-6",
+    "description": "Mimari ve Gizlilik Riski (Arch + Privacy Risk)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_ROLLBACK_NOW" },
+      { "id": "D2", "choice": "D2_SMOKE_TEST" },
+      { "id": "D3", "choice": "D3_SHARE_RAW" }
+    ],
+    "expectedFlags": ["ARCH_RISK", "PRIVACY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-7",
+    "description": "Mimari ve Doğrulama Riski (Arch + Verify Risk)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_ROLLBACK_NOW" },
+      { "id": "D2", "choice": "D2_DEPLOY_NOW" },
+      { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
+    ],
+    "expectedFlags": ["ARCH_RISK", "VERIFY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  },
+  {
+    "pathId": "PATH-8",
+    "description": "Tüm Riskler (All 3 Risks Incurred)",
+    "decisions": [
+      { "id": "D1", "choice": "D1_ROLLBACK_NOW" },
+      { "id": "D2", "choice": "D2_DEPLOY_NOW" },
+      { "id": "D3", "choice": "D3_SHARE_RAW" }
+    ],
+    "expectedFlags": ["ARCH_RISK", "VERIFY_RISK", "PRIVACY_RISK"],
+    "expectedEnding": "UNSAFE_RECOVERY"
+  }
+]

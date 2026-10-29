@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+  }
+
+  body {
+    background-color: #008080;
+    color: #000000;
+    font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    user-select: text;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Authentic Windows 95/98 3D Bevel Utilities */
+
+/* 3D Raised Bevel (Windows, Standard Buttons, Dialogs) */
+.win95-raised {
+  background-color: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: inset -1px -1px 0px #808080, inset 1px 1px 0px #dfdfdf;
+}
+
+/* 3D Sunken / Inset Bevel (Textboxes, Lists, Progress Wells, Statusbars) */
+.win95-inset {
+  background-color: #ffffff;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  box-shadow: inset 1px 1px 0px #000000, inset -1px -1px 0px #dfdfdf;
+}
+
+/* 3D Dark Inset for Terminal / Logs */
+.win95-inset-dark {
+  background-color: #000000;
+  color: #00ff66;
+  font-family: "Courier New", Courier, monospace;
+  border-top: 2px solid #808080;
+  border-left: 2px solid #808080;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  box-shadow: inset 1px 1px 0px #000000;
+}
+
+/* Standard Win95 Push Button */
+.win95-btn {
+  background-color: #c0c0c0;
+  color: #000000;
+  font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  box-shadow: inset -1px -1px 0px #808080, inset 1px 1px 0px #dfdfdf;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  min-height: 26px;
+}
+
+.win95-btn:active:not(:disabled) {
+  border-top: 2px solid #000000;
+  border-left: 2px solid #000000;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  box-shadow: inset 1px 1px 0px #808080;
+  padding: 5px 9px 3px 11px;
+}
+
+.win95-btn:disabled {
+  color: #808080;
+  text-shadow: 1px 1px 0px #ffffff;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* Default / Primary Highlighted Button */
+.win95-btn-primary {
+  outline: 1px dotted #000000;
+  outline-offset: -4px;
+}
+
+/* Small Window Control Button (Close, Min, Max) */
+.win95-title-btn {
+  width: 16px;
+  height: 14px;
+  background-color: #c0c0c0;
+  color: #000000;
+  font-size: 9px;
+  font-weight: bold;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset -1px -1px 0px #808080;
+  cursor: pointer;
+  padding: 0;
+}
+
+.win95-title-btn:active {
+  border-top: 1px solid #000000;
+  border-left: 1px solid #000000;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  box-shadow: none;
+}
+
+/* Active Titlebar Gradient */
+.win95-titlebar {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  letter-spacing: 0.2px;
+}
+
+.win95-titlebar-inactive {
+  background: linear-gradient(90deg, #808080 0%, #b5b5b5 100%);
+  color: #d4d0c8;
+}
+
+/* Windows 95 Tab Control */
+.win95-tab {
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: none;
+  background-color: #c0c0c0;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-right: 2px;
+  position: relative;
+  top: 1px;
+}
+
+.win95-tab-active {
+  border-top: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  border-right: 2px solid #000000;
+  border-bottom: 2px solid #c0c0c0;
+  background-color: #c0c0c0;
+  font-weight: bold;
+  z-index: 2;
+  top: 0px;
+  padding-bottom: 5px;
+}
+
+/* Groupbox / Fieldset */
+.win95-groupbox {
+  border: 2px groove #ffffff;
+  padding: 8px 10px;
+  margin-top: 6px;
+  position: relative;
+}
+
+.win95-legend {
+  font-weight: 600;
+  font-size: 11px;
+  padding: 0 4px;
+  background-color: #c0c0c0;
+}
+
+/* Status Well */
+.win95-status-well {
+  border-top: 1px solid #808080;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #ffffff;
+  border-bottom: 1px solid #ffffff;
+  padding: 2px 6px;
+  font-size: 10px;
+  background-color: #c0c0c0;
+}
+
+/* Scrollbar styles for retro feel */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+  background: #dfdfdf;
+}
+
+::-webkit-scrollbar-button {
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-top: 1px solid #ffffff;
+  border-left: 1px solid #ffffff;
+  border-right: 1px solid #000000;
+  border-bottom: 1px solid #000000;
+  box-shadow: inset 1px 1px 0px #dfdfdf, inset -1px -1px 0px #808080;
+}
