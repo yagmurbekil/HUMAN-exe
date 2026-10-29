@@ -1,4 +1,5 @@
 /// <reference types="cypress" />
+import paths from '../fixtures/paths.json';
 
 describe('HUMAN.exe — All 8 Decision Paths (2 × 2 × 2 Matrix)', () => {
   beforeEach(() => {
@@ -6,86 +7,32 @@ describe('HUMAN.exe — All 8 Decision Paths (2 × 2 × 2 Matrix)', () => {
     cy.visit('/');
   });
 
-  // Load the 8 paths from fixtures
-  const paths = [
-    {
-      pathId: 'PATH-1',
-      description: 'Tamamen Güvenli Yol (All Safe)',
-      choices: ['D1_VERIFY_SCHEMA', 'D2_SMOKE_TEST', 'D3_REDACT_RESTRICT'],
-      expectedFlags: [],
-      expectedEnding: 'SAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-2',
-      description: 'Yalnızca Gizlilik Riski (Privacy Risk Only)',
-      choices: ['D1_VERIFY_SCHEMA', 'D2_SMOKE_TEST', 'D3_SHARE_RAW'],
-      expectedFlags: ['PRIVACY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-3',
-      description: 'Yalnızca Doğrulama Riski (Verify Risk Only)',
-      choices: ['D1_VERIFY_SCHEMA', 'D2_DEPLOY_NOW', 'D3_REDACT_RESTRICT'],
-      expectedFlags: ['VERIFY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-4',
-      description: 'Doğrulama ve Gizlilik Riski (Verify + Privacy Risk)',
-      choices: ['D1_VERIFY_SCHEMA', 'D2_DEPLOY_NOW', 'D3_SHARE_RAW'],
-      expectedFlags: ['VERIFY_RISK', 'PRIVACY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-5',
-      description: 'Yalnızca Mimari Risk (Arch Risk Only)',
-      choices: ['D1_ROLLBACK_NOW', 'D2_SMOKE_TEST', 'D3_REDACT_RESTRICT'],
-      expectedFlags: ['ARCH_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-6',
-      description: 'Mimari ve Gizlilik Riski (Arch + Privacy Risk)',
-      choices: ['D1_ROLLBACK_NOW', 'D2_SMOKE_TEST', 'D3_SHARE_RAW'],
-      expectedFlags: ['ARCH_RISK', 'PRIVACY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-7',
-      description: 'Mimari ve Doğrulama Riski (Arch + Verify Risk)',
-      choices: ['D1_ROLLBACK_NOW', 'D2_DEPLOY_NOW', 'D3_REDACT_RESTRICT'],
-      expectedFlags: ['ARCH_RISK', 'VERIFY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-    {
-      pathId: 'PATH-8',
-      description: 'Tüm Riskler (All 3 Risks Incurred)',
-      choices: ['D1_ROLLBACK_NOW', 'D2_DEPLOY_NOW', 'D3_SHARE_RAW'],
-      expectedFlags: ['ARCH_RISK', 'VERIFY_RISK', 'PRIVACY_RISK'],
-      expectedEnding: 'UNSAFE_RECOVERY',
-    },
-  ];
-
+  // The 8 paths come from the shared fixture also used by rules.cy.ts (AC-14)
   paths.forEach((p) => {
     it(`should execute ${p.pathId} (${p.description}) reaching ${p.expectedEnding}`, () => {
+      const [c1, c2, c3] = p.decisions.map((d) => d.choice);
+      const [clock1, clock2, clock3] = p.expectedClocks;
+
       // 1. Complete onboarding
       cy.completeOnboarding('intermediate', 'developer', 'risk');
+      cy.get('[data-cy="simulated-clock"]').should('have.text', '08:00');
 
       // 2. Decision D1
       cy.get('[data-cy="decision-window"]').should('be.visible');
-      cy.makeDecisionAndJustify(p.choices[0], 0);
+      cy.makeDecisionAndJustify(c1, 0, clock1);
 
       // 3. Decision D2
       cy.get('[data-cy="decision-window"]').should('be.visible');
-      cy.makeDecisionAndJustify(p.choices[1], 1);
+      cy.makeDecisionAndJustify(c2, 1, clock2);
 
       // 4. Decision D3
       cy.get('[data-cy="decision-window"]').should('be.visible');
-      cy.makeDecisionAndJustify(p.choices[2], 0);
+      cy.makeDecisionAndJustify(c3, 0, clock3);
 
       // 5. Final Report Verification
       cy.get('[data-cy="report-window"]').should('be.visible');
       cy.get('[data-cy="ending"]').should('contain.text', p.expectedEnding);
+      cy.get('[data-cy="ending"]').should('contain.text', `Simüle Bitiş Saati: ${clock3}`);
 
       // Verify exact flag set
       const allFlags = ['ARCH_RISK', 'VERIFY_RISK', 'PRIVACY_RISK'];
@@ -97,10 +44,12 @@ describe('HUMAN.exe — All 8 Decision Paths (2 × 2 × 2 Matrix)', () => {
         }
       });
 
-      // 6. Restart Session
+      // 6. Restart Session (requires confirmation)
       cy.get('[data-cy="restart-btn"]').click();
+      cy.confirmRestart();
       cy.get('[data-cy="onboarding-window"]').should('be.visible');
       cy.get('[data-cy="start-session-btn"]').should('be.disabled');
+      cy.get('[data-cy="simulated-clock"]').should('have.text', '08:00');
     });
   });
 });

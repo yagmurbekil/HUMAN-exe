@@ -15,6 +15,8 @@ import { JustifyModal } from './JustifyModal';
 import { ConsequenceWindow } from './ConsequenceWindow';
 import { ReportWindow } from './ReportWindow';
 import { TutorWindow } from './TutorWindow';
+import { ConfirmRestartDialog } from './ConfirmRestartDialog';
+import { getClockAfterDecision } from '../utils/rules';
 
 export const Desktop: React.FC = () => {
   // Core Simulation State
@@ -43,6 +45,7 @@ export const Desktop: React.FC = () => {
   const [isIncidentLogOpen, setIsIncidentLogOpen] = useState<boolean>(false);
   const [isAssistInfoOpen, setIsAssistInfoOpen] = useState<boolean>(false);
   const [isSystemInfoOpen, setIsSystemInfoOpen] = useState<boolean>(false);
+  const [isRestartConfirmOpen, setIsRestartConfirmOpen] = useState<boolean>(false);
 
   // Active decision data
   const currentDecision = DECISIONS[activeDecisionId];
@@ -74,10 +77,9 @@ export const Desktop: React.FC = () => {
       setFlags((prev) => [...prev, flagIncurred]);
     }
 
-    // Update clock
-    if (consequence?.clockResult) {
-      setCurrentClock(consequence.clockResult);
-    }
+    // Update clock: accumulate this option's time cost onto the current clock
+    const clockAfter = getClockAfterDecision(currentClock, pendingOption);
+    setCurrentClock(clockAfter);
 
     // Save decision record
     const newRecord: DecisionRecord = {
@@ -90,6 +92,7 @@ export const Desktop: React.FC = () => {
       flagIncurred: flagIncurred,
       consequenceText: consequence?.description || '',
       principleText: consequence?.principle || '',
+      clockAfter,
     };
 
     setRecords((prev) => ({
@@ -131,6 +134,13 @@ export const Desktop: React.FC = () => {
     setIsIncidentLogOpen(false);
     setIsAssistInfoOpen(false);
     setIsSystemInfoOpen(false);
+    setIsRestartConfirmOpen(false);
+  };
+
+  // Every restart entry point asks for confirmation first (spec §10)
+  const requestRestart = () => {
+    setIsStartMenuOpen(false);
+    setIsRestartConfirmOpen(true);
   };
 
   const handleHintStepUsed = (newStep: number) => {
@@ -222,6 +232,7 @@ export const Desktop: React.FC = () => {
                   : currentDecision.consequences[Object.keys(currentDecision.consequences)[0]]
               }
               flagIncurred={records[activeDecisionId]?.flagIncurred || null}
+              clock={records[activeDecisionId]?.clockAfter || currentClock}
               level={profile.level}
               onContinue={handleContinueFromConsequence}
               onOpenTutor={() => setIsTutorOpen(true)}
@@ -234,7 +245,7 @@ export const Desktop: React.FC = () => {
               flags={flags}
               records={records}
               finalClock={currentClock}
-              onRestart={handleRestartSession}
+              onRestart={requestRestart}
             />
           )}
         </main>
@@ -254,6 +265,7 @@ export const Desktop: React.FC = () => {
       {isTutorOpen && !isJustifyModalOpen && (
         <div className="fixed bottom-12 right-2 sm:right-6 z-40 max-w-[94vw] sm:max-w-md w-full animate-in slide-in-from-bottom-6">
           <TutorWindow
+            key={activeDecisionId} // Remount (clear chat history) when the decision changes
             decisionId={activeDecisionId}
             decisionNumber={currentDecision.number}
             profile={profile}
@@ -453,10 +465,8 @@ export const Desktop: React.FC = () => {
               <div className="border-t border-[#808080] my-1" />
 
               <button
-                onClick={() => {
-                  setIsStartMenuOpen(false);
-                  handleRestartSession();
-                }}
+                onClick={requestRestart}
+                data-cy="start-menu-restart"
                 className="w-full text-left px-2 py-1.5 flex items-center gap-2 hover:bg-[#000080] hover:text-white font-bold"
               >
                 <span>🔄</span>
@@ -465,6 +475,14 @@ export const Desktop: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Restart Confirmation Dialog */}
+      {isRestartConfirmOpen && (
+        <ConfirmRestartDialog
+          onConfirm={handleRestartSession}
+          onCancel={() => setIsRestartConfirmOpen(false)}
+        />
       )}
 
       {/* Windows 95 Taskbar */}

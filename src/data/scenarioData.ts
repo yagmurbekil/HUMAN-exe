@@ -67,6 +67,8 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         id: 'D1_ROLLBACK_NOW',
         text: 'ASSIST.exe önerisini uygula: v2.3\'e hemen geri dön.',
         timeCostMin: 5,
+        // Geri alma başarısız olur; ekibin v2.4'e dönmesi 20 dk daha sürer (§6.2).
+        recoveryPenaltyMin: 20,
         flag: 'ARCH_RISK',
         isSafe: false,
       },
@@ -101,7 +103,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Şema Doğrulaması Tamamlandı — Roll-Forward Kararı',
         description:
           'Doğrulama, v2.3\'ün slot_type sütununu yazamayacağını gösterir; geri alma randevu kayıtlarını bozacaktı. Ekip v2.4 üzerinde kalıp yamayla ileri düzeltme (roll-forward) yapmaya karar verir.',
-        clockResult: '08:15',
         principle: 'Geriye dönük uyumluluk, geri dönüş planı, AI önerisinin dayandığı kanıtın sorgulanması.',
         definition:
           'Geriye Dönük Uyumluluk (Backward Compatibility): Bir sistemin eski sürümlerinin yeni veri formatları veya veritabanı şemalarıyla bozulmadan çalışabilme yeteneğidir.',
@@ -112,7 +113,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Kritik Şema Uyuşmazlığı — İkincil Kesinti',
         description:
           'v2.3 devreye girer; yeni şemaya kayıt yazamadığı için randevu oluşturma tamamen durur. Ekip 20 dakika sonra v2.4\'e geri döner. Saat 08:25. ARCH_RISK kaydedildi.',
-        clockResult: '08:25',
         principle: 'Geriye dönük uyumluluk, geri dönüş planı, AI önerisinin dayandığı kanıtın sorgulanması.',
         definition:
           'Şema Göçü Riski (Schema Migration Risk): Veritabanında zorunlu kılınan yeni kolonlara eski kod sürümlerinin yazamaması sonucu oluşan sessiz veya yıkıcı çöküşlerdir.',
@@ -123,7 +123,7 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
     hintLadder: [
       'ASSIST.exe önerisini hangi metrik üzerine kurmuş? Veritabanı katmanını hesaba katmış mı?',
       'MIGRATION_DIFF ve RELEASE_NOTES kartlarındaki slot_type kolonuna ve rollback betiği durumuna dikkatle bakın.',
-      'v2.4 ile eklenen zorunlu (NOT NULL) bir alanı eski v2.3 kodunun tanıyıp tanıyamayacağı belirsizdir. Eski sürümün yeni şemayla uyumu kanıtlanmadan geri alma güvenli değildir.',
+      'Geriye dönük uyumluluk (backward compatibility), eski bir kod sürümünün yeni veri yapısıyla bozulmadan çalışabilmesidir. v2.3 kodu, v2.4 ile eklenen zorunlu bir sütundan haberdar mı ve bunu hangi kanıta dayanarak bilebilirsin?',
     ],
   },
 
@@ -214,7 +214,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Smoke Test ile Oturum Hatası Yakalandı',
         description:
           'Smoke test, 5 dakika sonra oturumu düşüren bir token hatasını yakalar; hata düzeltilir, düzeltilmiş yama güvenle yayına alınır.',
-        clockResult: '08:25',
         principle: 'Test kanıtının kapsamı, smoke test, birim/uçtan uca test farkı.',
         definition:
           'Smoke Test (Duman Testi): Bir sürümün en temel ve kritik işlevlerinin canlı ortamda çalışabilirliğini doğrulayan asgari kapsamlı test protokolüdür.',
@@ -225,7 +224,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Canlıda Aralıklı Oturum Düşmesi',
         description:
           'Randevu ekranı açılır; ancak oturum hatası nedeniyle kullanıcıların bir kısmı randevu tamamlarken oturumdan atılır (aralıklı hata). VERIFY_RISK kaydedildi.',
-        clockResult: '08:17',
         principle: 'Test kanıtının kapsamı, smoke test, birim/uçtan uca test farkı.',
         definition:
           'Birim Testi Sınırları: Birim testleri modülleri soyutlanmış ortamda sınar; entegre oturum ve durum yönetimi problemlerini kanıtlayamaz.',
@@ -236,7 +234,7 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
     hintLadder: [
       'Birim testlerinin geçmiş olması (CI_STATUS) kullanıcıların uçtan uca randevu alabileceğini garanti eder mi?',
       'HOTFIX_DIFF kartındaki kod değişikliklerine bakın. Yama randevu sorgusu dışında hangi kritik modüle dokunuyor?',
-      'Yama oturum (session token) kodunu değiştirmiştir. İzole birim testleri oturumun canlı akışta düşmeyeceğini kanıtlamaz; odaklı bir smoke test şarttır.',
+      'Birim testi tek bir modülü izole ortamda sınar; uçtan uca bir kontrol ise kullanıcı akışını baştan sona doğrular. CI_STATUS\'taki 42/42 sonucu, yamanın dokunduğu oturum kodu hakkında hangi soruyu yanıtlıyor, hangisini yanıtsız bırakıyor?',
     ],
   },
 
@@ -319,7 +317,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Veri Minimizasyonu Sağlandı — Güvenli Paylaşım',
         description:
           'Analiz için gereken teknik alanlar korunur, kişisel veri ifşa edilmez. Çekirdek ekip kök nedeni hasta mahremiyetini çiğnemeden çözer.',
-        clockResult: '08:33',
         principle: 'Veri minimizasyonu, en az yetki, erişim kapsamı.',
         definition:
           'Veri Maskeleme (Redaction): Teknik analizde değeri olmayan kişisel kimlik verilerinin paylaşım öncesinde otomatik veya manuel olarak ayıklanmasıdır.',
@@ -330,7 +327,6 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
         title: 'Kişisel Veri İhlali — Hukuki Eskalasyon',
         description:
           'Kurgusal hasta verisi 120 kişiye (harici yükleniciler dahil) ifşa olur; simüle olarak kurumun veri koruma sorumlusuna eskalasyon gerekir. PRIVACY_RISK kaydedildi.',
-        clockResult: '08:26',
         principle: 'Veri minimizasyonu, en az yetki, erişim kapsamı.',
         definition:
           'En Az Yetki İlkesi (Least Privilege): Veriye erişimin yalnızca o işlemi icra etmekle yükümlü olan minimum sayıda kişiye tahsis edilmesidir.',
@@ -341,7 +337,7 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
     hintLadder: [
       'Log örneğindeki patient_name ve national_id alanları teknik hata analizine doğrudan katkı sağlar mı?',
       'CHANNEL_INFO kartındaki 120 kişilik üye profiline ve üçüncü parti yüklenicilere dikkat ettin mi?',
-      'ASSIST.exe bu kez doğru öneride bulunuyor: Kimlik alanlarını maskelemek (redaction) ve erişimi çekirdek ekiple (#olay-0800) sınırlamak veri koruma yasalarının zorunlu gereğidir.',
+      'Veri minimizasyonu, bir iş için yalnızca gerekli verinin işlenmesidir; en az yetki ise erişimin yalnızca bilmesi gerekenlerle sınırlanmasıdır. Kök neden analizi için LOG_SAMPLE\'daki hangi alanlar gerçekten gerekli ve bu logu kimlerin görmesi gerekiyor?',
     ],
   },
 };
@@ -352,33 +348,24 @@ export const DECISIONS: Record<DecisionId, DecisionDefinition> = {
  * - QA: Test/evidence card first (RELEASE_NOTES, CI_STATUS, LOG_SAMPLE)
  * - Technical Lead: Stakeholder/policy card first (STAKEHOLDER_MSG, STAKEHOLDER_MSG, DATA_POLICY)
  */
+export const PINNED_CARD_BY_ROLE: Record<Role, Record<DecisionId, string>> = {
+  developer: { D1: 'MIGRATION_DIFF', D2: 'HOTFIX_DIFF', D3: 'LOG_SAMPLE' },
+  qa: { D1: 'RELEASE_NOTES', D2: 'CI_STATUS', D3: 'LOG_SAMPLE' },
+  tech_lead: { D1: 'STAKEHOLDER_MSG', D2: 'STAKEHOLDER_MSG', D3: 'DATA_POLICY' },
+};
+
+// Pins the role's card first and keeps the remaining cards in their original order.
 export function getOrderedEvidenceCards(
   cards: DecisionDefinition['evidenceCards'],
-  role: Role | null
+  role: Role | null,
+  decisionId: DecisionId
 ) {
   if (!role) return cards;
 
-  const cardsCopy = [...cards];
-  if (role === 'developer') {
-    return cardsCopy.sort((a, b) => {
-      const aIsCode = a.category === 'code' ? -1 : 1;
-      const bIsCode = b.category === 'code' ? -1 : 1;
-      return aIsCode - bIsCode;
-    });
-  } else if (role === 'qa') {
-    return cardsCopy.sort((a, b) => {
-      const aIsTest = a.category === 'test' ? -1 : 1;
-      const bIsTest = b.category === 'test' ? -1 : 1;
-      return aIsTest - bIsTest;
-    });
-  } else if (role === 'tech_lead') {
-    return cardsCopy.sort((a, b) => {
-      const aIsPolicy = a.category === 'policy' ? -1 : 1;
-      const bIsPolicy = b.category === 'policy' ? -1 : 1;
-      return aIsPolicy - bIsPolicy;
-    });
-  }
-  return cards;
+  const pinnedId = PINNED_CARD_BY_ROLE[role][decisionId];
+  const pinned = cards.find((c) => c.id === pinnedId);
+  if (!pinned) return cards;
+  return [pinned, ...cards.filter((c) => c.id !== pinnedId)];
 }
 
 /**

@@ -4,7 +4,8 @@ declare global {
   namespace Cypress {
     interface Chainable {
       completeOnboarding(level?: string, role?: string, goal?: string): Chainable<void>;
-      makeDecisionAndJustify(choiceId: string, justifyIndex?: number): Chainable<void>;
+      makeDecisionAndJustify(choiceId: string, justifyIndex?: number, expectedClock?: string): Chainable<void>;
+      confirmRestart(): Chainable<void>;
       stubTutorApi(): Chainable<void>;
     }
   }
@@ -33,7 +34,7 @@ Cypress.Commands.add('completeOnboarding', (level = 'intermediate', role = 'deve
   cy.get('[data-cy="start-session-btn"]').should('not.be.disabled').click();
 });
 
-Cypress.Commands.add('makeDecisionAndJustify', (choiceId: string, justifyIndex = 0) => {
+Cypress.Commands.add('makeDecisionAndJustify', (choiceId: string, justifyIndex = 0, expectedClock?: string) => {
   cy.get(`[data-cy="choice-${choiceId}"]`).click();
   cy.get('[data-cy="confirm-decision-btn"]').should('not.be.disabled').click();
 
@@ -44,7 +45,17 @@ Cypress.Commands.add('makeDecisionAndJustify', (choiceId: string, justifyIndex =
 
   // Consequence screen
   cy.get('[data-cy="consequence-window"]').should('be.visible');
+  if (expectedClock) {
+    cy.get('[data-cy="consequence-clock"]').should('contain.text', expectedClock);
+    cy.get('[data-cy="simulated-clock"]').should('have.text', expectedClock);
+  }
   cy.get('[data-cy="continue-btn"]').click();
+});
+
+Cypress.Commands.add('confirmRestart', () => {
+  cy.get('[data-cy="restart-confirm-dlg"]').should('be.visible');
+  cy.get('[data-cy="restart-confirm-yes"]').click();
+  cy.get('[data-cy="restart-confirm-dlg"]').should('not.exist');
 });
 
 export {};

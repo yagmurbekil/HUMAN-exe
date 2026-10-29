@@ -20,7 +20,7 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
 }) => {
   const [selectedOptionId, setSelectedOptionId] = useState<OptionId | null>(null);
 
-  const orderedCards = getOrderedEvidenceCards(decision.evidenceCards, profile.role);
+  const orderedCards = getOrderedEvidenceCards(decision.evidenceCards, profile.role, decision.id);
   const goalConfig = profile.goal ? GOAL_CONFIG[profile.goal] : null;
   const isFocusDecision = goalConfig?.focusDecision === decision.id;
 

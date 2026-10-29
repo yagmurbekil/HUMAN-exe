@@ -11,8 +11,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
-import { DECISIONS, FORBIDDEN_TERMS } from './src/data/scenarioData.ts';
+import { DECISIONS } from './src/data/scenarioData.ts';
 import { DecisionId, UserProfile } from './src/types/index.ts';
+import { checkForbiddenGuard } from './src/utils/tutorLogic.ts';
 
 dotenv.config();
 
@@ -24,17 +25,8 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
-// Socratic Guard: Server-side boundary-aware forbidden terms check
-function isGuardTriggered(text: string): boolean {
-  for (const term of FORBIDDEN_TERMS) {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu');
-    if (pattern.test(text)) {
-      return true;
-    }
-  }
-  return false;
-}
+// Socratic Guard: shared with the client fallback so both use the same Turkish-aware matching
+const isGuardTriggered = checkForbiddenGuard;
 
 // Health / Status endpoint
 app.get('/api/health', (_req: Request, res: Response) => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DecisionRecord, Flag, UserProfile } from '../types';
 import { GOAL_CONFIG } from '../data/scenarioData';
+import { getEnding } from '../utils/rules';
 
 interface ReportWindowProps {
   profile: UserProfile;
@@ -17,8 +18,8 @@ export const ReportWindow: React.FC<ReportWindowProps> = ({
   finalClock,
   onRestart,
 }) => {
-  const isSafeRecovery = flags.length === 0;
-  const ending = isSafeRecovery ? 'SAFE_RECOVERY' : 'UNSAFE_RECOVERY';
+  const ending = getEnding(flags);
+  const isSafeRecovery = ending === 'SAFE_RECOVERY';
 
   const goalConfig = profile.goal ? GOAL_CONFIG[profile.goal] : null;
   const [reflectionText, setReflectionText] = useState('');

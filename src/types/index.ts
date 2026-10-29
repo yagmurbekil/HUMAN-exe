@@ -54,6 +54,7 @@ export interface DecisionOption {
   id: OptionId;
   text: string;
   timeCostMin: number;
+  recoveryPenaltyMin?: number; // Extra simulated minutes caused by the consequence
   flag: Flag | null;
   isSafe: boolean;
 }
@@ -67,7 +68,6 @@ export interface Justification {
 export interface ConsequenceDetail {
   title: string;
   description: string;
-  clockResult: string;
   principle: string;
   definition?: string; // For beginner
   tradeoffQuestion?: string; // For advanced
@@ -101,6 +101,7 @@ export interface DecisionRecord {
   flagIncurred: Flag | null;
   consequenceText: string;
   principleText: string;
+  clockAfter: string;
 }
 
 export interface SimulationContext {

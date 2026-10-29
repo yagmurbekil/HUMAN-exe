@@ -6,6 +6,7 @@ interface ConsequenceWindowProps {
   decisionNumber: number;
   consequence: ConsequenceDetail;
   flagIncurred: Flag | null;
+  clock: string;
   level: Level | null;
   onContinue: () => void;
   onOpenTutor: () => void;
@@ -16,6 +17,7 @@ export const ConsequenceWindow: React.FC<ConsequenceWindowProps> = ({
   decisionNumber,
   consequence,
   flagIncurred,
+  clock,
   level,
   onContinue,
   onOpenTutor,
@@ -64,8 +66,11 @@ export const ConsequenceWindow: React.FC<ConsequenceWindowProps> = ({
               <span>{flagIncurred ? '⚠️ RİSKLİ EYLEM' : '🛡️ GÜVENLİ MÜDAHALE'}</span>
               <span>— {consequence.title}</span>
             </span>
-            <span className="font-mono text-[11px] bg-white px-2 py-0.5 border border-current">
-              Yeni Saat: {consequence.clockResult}
+            <span
+              className="font-mono text-[11px] bg-white px-2 py-0.5 border border-current"
+              data-cy="consequence-clock"
+            >
+              Yeni Saat: {clock}
             </span>
           </div>
           <p className="text-black text-[11px] leading-relaxed">

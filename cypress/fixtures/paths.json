@@ -8,7 +8,8 @@
       { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
     ],
     "expectedFlags": [],
-    "expectedEnding": "SAFE_RECOVERY"
+    "expectedEnding": "SAFE_RECOVERY",
+    "expectedClocks": ["08:15", "08:25", "08:33"]
   },
   {
     "pathId": "PATH-2",
@@ -19,7 +20,8 @@
       { "id": "D3", "choice": "D3_SHARE_RAW" }
     ],
     "expectedFlags": ["PRIVACY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:15", "08:25", "08:26"]
   },
   {
     "pathId": "PATH-3",
@@ -30,7 +32,8 @@
       { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
     ],
     "expectedFlags": ["VERIFY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:15", "08:17", "08:25"]
   },
   {
     "pathId": "PATH-4",
@@ -41,7 +44,8 @@
       { "id": "D3", "choice": "D3_SHARE_RAW" }
     ],
     "expectedFlags": ["VERIFY_RISK", "PRIVACY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:15", "08:17", "08:18"]
   },
   {
     "pathId": "PATH-5",
@@ -52,7 +56,8 @@
       { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
     ],
     "expectedFlags": ["ARCH_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:25", "08:35", "08:43"]
   },
   {
     "pathId": "PATH-6",
@@ -63,7 +68,8 @@
       { "id": "D3", "choice": "D3_SHARE_RAW" }
     ],
     "expectedFlags": ["ARCH_RISK", "PRIVACY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:25", "08:35", "08:36"]
   },
   {
     "pathId": "PATH-7",
@@ -74,7 +80,8 @@
       { "id": "D3", "choice": "D3_REDACT_RESTRICT" }
     ],
     "expectedFlags": ["ARCH_RISK", "VERIFY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:25", "08:27", "08:35"]
   },
   {
     "pathId": "PATH-8",
@@ -85,6 +92,7 @@
       { "id": "D3", "choice": "D3_SHARE_RAW" }
     ],
     "expectedFlags": ["ARCH_RISK", "VERIFY_RISK", "PRIVACY_RISK"],
-    "expectedEnding": "UNSAFE_RECOVERY"
+    "expectedEnding": "UNSAFE_RECOVERY",
+    "expectedClocks": ["08:25", "08:27", "08:28"]
   }
 ]

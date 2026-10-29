@@ -31,16 +31,27 @@ export function getMaxHintsForLevel(level: Level | null): number {
 }
 
 /**
+ * Turkish-aware case folding for guard matching.
+ * The regex 'i' flag cannot fold 'İ' (U+0130) to 'i', so "İkinci seçenek" used to bypass the guard.
+ * Lowercasing with the tr-TR locale maps İ→i and I→ı; folding ı→i then also matches
+ * English identifiers written in capitals (e.g. "ASSIST.exe").
+ */
+export function normalizeForGuard(text: string): string {
+  return text.toLocaleLowerCase('tr-TR').replace(/ı/g, 'i');
+}
+
+/**
  * Validates text against the Socratic Guard (forbidden terms)
  * Uses boundary-aware Unicode regex to prevent false positives
  * (e.g., 'seçenek b' matching 'seçenek belirtemem').
  */
 export function checkForbiddenGuard(text: string): boolean {
+  const normalizedText = normalizeForGuard(text);
   for (const term of FORBIDDEN_TERMS) {
-    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = normalizeForGuard(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // Negative lookbehind and lookahead on Unicode letters and numbers (\p{L}\p{N})
-    const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'iu');
-    if (pattern.test(text)) {
+    const pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'u');
+    if (pattern.test(normalizedText)) {
       return true; // Real match found -> guard triggered!
     }
   }
