@@ -42,24 +42,10 @@ export const TutorWindow: React.FC<TutorWindowProps> = ({
   const maxHints = getMaxHintsForLevel(profile.level);
   const hintsRemaining = Math.max(0, maxHints - hintStepsUsed);
 
-  // Check initial API health / availability
+  // Initial badge starts as KURAL TABANLI YEDEK. Only switches to CANLI AI after first real successful Gemini response.
   useEffect(() => {
-    let isMounted = true;
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted && data?.hasKey) {
-          setTutorMode('CANLI AI');
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setTutorMode('KURAL TABANLI YEDEK');
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
+    // Ping health in background without prematurely displaying CANLI AI
+    fetch('/api/health').catch(() => {});
   }, []);
 
   const handleRequestHint = () => {

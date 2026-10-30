@@ -28,15 +28,65 @@ app.use(express.json());
 // Socratic Guard: shared with the client fallback so both use the same Turkish-aware matching
 const isGuardTriggered = checkForbiddenGuard;
 
+// Resolve API key from environment (supporting GEMINI_API_KEY, GEMINI_API_KEY2, API_KEY)
+function getApiKey(): string | undefined {
+  const k = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY2 || process.env.API_KEY;
+  if (!k || k === 'MY_GEMINI_API_KEY') return undefined;
+  return k;
+}
+
 // Health / Status endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
-  const hasKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY');
+  const hasKey = Boolean(getApiKey());
   res.json({
     status: 'ok',
     hasKey,
-    model: 'gemini-3.8-flash',
+    model: 'gemini-3.5-flash-lite',
   });
 });
+
+// Helper: Call Gemini with controlled 503 retries (max 2), no retries on 403/429
+async function generateContentWithRetry(
+  ai: GoogleGenAI,
+  modelName: string,
+  contents: any,
+  config: any
+) {
+  const MAX_RETRIES = 2;
+  const DELAYS = [600, 1400];
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await ai.models.generateContent({
+        model: modelName,
+        contents,
+        config,
+      });
+    } catch (error: any) {
+      const status = error?.status || error?.code || 0;
+      const is503 =
+        status === 503 ||
+        status === 'UNAVAILABLE' ||
+        String(error?.message || '').includes('503') ||
+        String(error?.message || '').includes('high demand');
+
+      // Do NOT retry on 403 (Permission Denied) or 429 (Rate Limit / Quota)
+      if (status === 403 || status === 429) {
+        throw error;
+      }
+
+      // Retry on 503 if retries remain
+      if (is503 && attempt < MAX_RETRIES) {
+        const delay = DELAYS[attempt] || 1000;
+        console.warn(`[Gemini API 503] Yeniden deneniyor (${attempt + 1}/${MAX_RETRIES}) ${delay}ms sonra...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+
+      throw error;
+    }
+  }
+}
 
 // Socratic Tutor POST endpoint
 app.post('/api/tutor', async (req: Request, res: Response) => {
@@ -52,8 +102,8 @@ app.post('/api/tutor', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Geçersiz karar veya soru parametresi.' });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+    const apiKey = getApiKey();
+    if (!apiKey) {
       return res.status(503).json({
         error: 'GEMINI_API_KEY tanımlı değil; kural tabanlı yedek moda geçiliyor.',
         fallbackRequired: true,
@@ -105,24 +155,38 @@ ${evidenceSummary}
 - Yanıt uzunluğu EN FAZLA ${maxWords} kelime olmalıdır.
 `.trim();
 
-    // Call Gemini API using verified gemini-3.8-flash model
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: studentInput }],
+    // Call Gemini API using verified stable model: gemini-3.5-flash-lite (falls back cleanly if unavailable)
+    const ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
         },
-      ],
-      config: {
-        systemInstruction,
-        temperature: 0.3,
-        maxOutputTokens: 250,
       },
     });
 
-    const candidateText = response.text?.trim() || '';
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: studentInput }],
+      },
+    ];
+
+    const config = {
+      systemInstruction,
+      temperature: 0.3,
+      maxOutputTokens: 250,
+    };
+
+    let response;
+    try {
+      response = await generateContentWithRetry(ai, 'gemini-3.5-flash-lite', contents, config);
+    } catch (primaryErr: any) {
+      console.warn('gemini-3.5-flash-lite failed, trying gemini-3.5-flash fallback:', primaryErr?.message || primaryErr);
+      response = await generateContentWithRetry(ai, 'gemini-3.5-flash', contents, config);
+    }
+
+    const candidateText = response?.text?.trim() || '';
 
     // Check Socratic output guard
     if (isGuardTriggered(candidateText) || !candidateText.includes('?')) {
@@ -135,6 +199,7 @@ ${evidenceSummary}
         text: safeHint,
         isGuardTriggered: true,
         mode: 'live',
+        model: 'gemini-3.5-flash-lite',
       });
     }
 
@@ -142,6 +207,7 @@ ${evidenceSummary}
       text: candidateText,
       isGuardTriggered: false,
       mode: 'live',
+      model: 'gemini-3.5-flash-lite',
     });
   } catch (error: any) {
     console.error('Gemini API Error in /api/tutor:', error?.message || error);
