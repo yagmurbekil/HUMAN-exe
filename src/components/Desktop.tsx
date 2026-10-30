@@ -158,7 +158,8 @@ export const Desktop: React.FC = () => {
       {/* Desktop Workspace Area */}
       <div className="flex-1 p-2 sm:p-4 flex flex-col items-center justify-start pb-16">
         {/* Top Desktop Shortcut Bar (Responsive Header) */}
-        <div className="w-full max-w-4xl flex items-center justify-between mb-3 px-1 text-white">
+        {/* flex-wrap: on narrow phones the buttons move below the title instead of overflowing off-screen */}
+        <div className="w-full max-w-4xl flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 mb-3 px-1 text-white">
           <div className="flex items-center gap-2">
             <span className="font-bold text-xs tracking-wider uppercase drop-shadow">
               HUMAN.exe — Sorumluluk Protokolü

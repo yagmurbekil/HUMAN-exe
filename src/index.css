@@ -119,6 +119,20 @@
   padding: 0;
 }
 
+/* Labelled titlebar button (e.g. "💬 Tutor"): sizes to its label.
+   Unlayered rules beat Tailwind utilities, so `w-auto px-*` on .win95-title-btn had no effect
+   and the label overflowed onto the neighbouring window controls. */
+.win95-title-btn-label {
+  width: auto;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 0 6px;
+  white-space: nowrap;
+  font-size: 10px;
+  background-color: #ffffe1;
+  color: #000080;
+}
+
 .win95-title-btn:active {
   border-top: 1px solid #000000;
   border-left: 1px solid #000000;

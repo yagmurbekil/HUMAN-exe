@@ -165,4 +165,37 @@ describe('HUMAN.exe — Regression: critical review fixes', () => {
       cy.get('[data-cy="ending"]').should('contain.text', 'SAFE_RECOVERY');
     });
   });
+
+  describe('Titlebar Tutor button does not overlap window controls', () => {
+    const assertNoOverlap = () => {
+      cy.get('[data-cy="titlebar-tutor-btn"]').then(($btn) => {
+        const btn = $btn[0];
+        // The label fits inside the button (no overflow onto neighbours)
+        expect(btn.scrollWidth, 'label overflow').to.be.at.most(btn.clientWidth + 1);
+        const next = btn.nextElementSibling as HTMLElement;
+        expect(btn.getBoundingClientRect().right, 'overlaps next control').to.be.at.most(
+          next.getBoundingClientRect().left
+        );
+      });
+    };
+
+    [
+      [390, 844],
+      [1280, 720],
+    ].forEach(([w, h]) => {
+      it(`decision and consequence titlebars at ${w}×${h}`, () => {
+        cy.viewport(w, h);
+        cy.stubTutorApi();
+        cy.visit('/');
+        cy.completeOnboarding('beginner', 'developer', 'validation');
+        assertNoOverlap();
+        cy.get('[data-cy="choice-D1_ROLLBACK_NOW"]').click();
+        cy.get('[data-cy="confirm-decision-btn"]').click();
+        cy.get('[data-cy="justification-option-0"]').click();
+        cy.get('[data-cy="justify-confirm-btn"]').click();
+        cy.get('[data-cy="consequence-window"]').should('be.visible');
+        assertNoOverlap();
+      });
+    });
+  });
 });

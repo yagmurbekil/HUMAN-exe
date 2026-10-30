@@ -38,11 +38,12 @@ export const ConsequenceWindow: React.FC<ConsequenceWindowProps> = ({
             HUMAN.exe — Teknik Sonuç &amp; İlke Analizi [D{decisionNumber}/3]
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onOpenTutor}
-            className="win95-title-btn text-[10px] w-auto px-1.5 bg-[#FFFFE1] text-[#000080] font-bold"
+            className="win95-title-btn win95-title-btn-label"
             title="Tutor ile Sonucu Değerlendir"
+            data-cy="titlebar-tutor-btn"
           >
             💬 Tutor
           </button>

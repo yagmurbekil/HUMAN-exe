@@ -44,4 +44,21 @@ describe('HUMAN.exe — Mobile Responsiveness (360px & 390px Viewports)', () => 
       expect(scrollWidth).to.be.at.most(innerWidth + 1);
     });
   });
+
+  // body has overflow-x: hidden, so scrollWidth alone cannot catch content clipped off the right edge
+  [360, 390].forEach((w) => {
+    it(`keeps the header TUTOR.hlp button inside the ${w}px viewport`, () => {
+      cy.viewport(w, 844);
+      cy.visit('/');
+      cy.completeOnboarding('beginner', 'developer', 'risk');
+      cy.get('[data-cy="tutor-btn"]').then(($btn) => {
+        const rect = $btn[0].getBoundingClientRect();
+        expect(rect.left, 'left edge').to.be.at.least(0);
+        expect(rect.right, 'right edge').to.be.at.most(w);
+      });
+      cy.get('[data-cy="decision-window"]').then(($win) => {
+        expect($win[0].getBoundingClientRect().right, 'decision window right edge').to.be.at.most(w);
+      });
+    });
+  });
 });
