@@ -179,11 +179,14 @@ ${evidenceSummary}
     };
 
     let response;
+    let successfulModel = 'gemini-3.5-flash-lite';
     try {
       response = await generateContentWithRetry(ai, 'gemini-3.5-flash-lite', contents, config);
+      successfulModel = 'gemini-3.5-flash-lite';
     } catch (primaryErr: any) {
       console.warn('gemini-3.5-flash-lite failed, trying gemini-3.5-flash fallback:', primaryErr?.message || primaryErr);
       response = await generateContentWithRetry(ai, 'gemini-3.5-flash', contents, config);
+      successfulModel = 'gemini-3.5-flash';
     }
 
     const candidateText = response?.text?.trim() || '';
@@ -198,8 +201,8 @@ ${evidenceSummary}
       return res.json({
         text: safeHint,
         isGuardTriggered: true,
-        mode: 'live',
-        model: 'gemini-3.5-flash-lite',
+        mode: 'fallback',
+        model: successfulModel,
       });
     }
 
@@ -207,7 +210,7 @@ ${evidenceSummary}
       text: candidateText,
       isGuardTriggered: false,
       mode: 'live',
-      model: 'gemini-3.5-flash-lite',
+      model: successfulModel,
     });
   } catch (error: any) {
     console.error('Gemini API Error in /api/tutor:', error?.message || error);

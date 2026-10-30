@@ -100,8 +100,13 @@ export const TutorWindow: React.FC<TutorWindowProps> = ({
         throw new Error('Geçersiz sunucu yanıtı.');
       }
 
-      // Live response successfully received
-      setTutorMode('CANLI AI');
+      // Update badge based on actual response source (CANLI AI only if live and un-guarded)
+      if (data.mode === 'live' && !data.isGuardTriggered) {
+        setTutorMode('CANLI AI');
+      } else {
+        setTutorMode('KURAL TABANLI YEDEK');
+      }
+
       setMessages((prev) => [
         ...prev,
         {
