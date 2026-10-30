@@ -133,7 +133,8 @@ export const TutorWindow: React.FC<TutorWindowProps> = ({
         query,
         decisionId,
         profile,
-        hintStepsUsed
+        hintStepsUsed,
+        messages.filter((m) => m.sender === 'user').length // earlier questions → varied replies
       );
 
       if (socraticRes.hintStepGiven !== undefined) {

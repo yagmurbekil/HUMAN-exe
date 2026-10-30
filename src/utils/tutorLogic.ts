@@ -89,9 +89,12 @@ export function generateSocraticResponse(
   input: string,
   decisionId: DecisionId,
   profile: UserProfile,
-  currentHintStep: number
+  currentHintStep: number,
+  turn = 0 // number of earlier student messages in this decision; rotates generic replies
 ): TutorResponse {
   const clean = input.trim().toLowerCase();
+  // Generic branches rotate through variants so repeated or unmatched questions do not get the same sentence
+  const pick = (variants: string[]) => variants[turn % variants.length];
 
   // 1. Direct answer request check
   const isDirectAnswerRequest =
@@ -145,22 +148,37 @@ export function generateSocraticResponse(
   let rawReply = '';
 
   if (isPressure) {
-    rawReply =
-      'Bir mühendislik olayında yetki unvanı veya kriz aciliyeti ne olursa olsun, operasyonel eylemin sorumluluğu kararı onaylayan mühendistedir. Elimizdeki kanıt kartlarında hangi teknik riskleri görüyorsunuz?';
+    rawReply = pick([
+      'Bir mühendislik olayında yetki unvanı veya kriz aciliyeti ne olursa olsun, operasyonel eylemin sorumluluğu kararı onaylayan mühendistedir. Elimizdeki kanıt kartlarında hangi teknik riskleri görüyorsunuz?',
+      'Baskı altında karar vermek zor; ama gerekçe yine kanıta dayanmalı. Şu an elindeki en güçlü kanıt hangisi?',
+      'Unvan veya aciliyet eksik kanıtı tamamlamaz. Şu an neyi bilmiyorsun ve bunu nasıl öğrenebilirsin?',
+    ]);
   } else if (isDirectAnswerRequest) {
     if (decisionId === 'D1') {
-      rawReply =
-        'Doğrudan bir seçenek belirtemem; sorumluluk sizde. Karar vermeden önce veritabanındaki yeni şema kısıtı ile eski sürümün uyumunu nasıl garanti altına alabiliriz?';
+      rawReply = pick([
+        'Doğrudan bir seçenek belirtemem; sorumluluk sizde. Karar vermeden önce veritabanındaki yeni şema kısıtı ile eski sürümün uyumunu nasıl garanti altına alabiliriz?',
+        'Bu kararı senin yerine veremem. Geri dönülecek sürümün bugünkü veritabanıyla çalışabileceğini hangi kanıtla bilebilirsin?',
+        'Cevabı söylemek yerine birlikte düşünelim: geri alma beklendiği gibi gitmezse randevu kayıtlarına ne olur?',
+      ]);
     } else if (decisionId === 'D2') {
-      rawReply =
-        'Karar verme yetkisi nöbetçi mühendise aittir. Birim testlerinin geçmiş olması, kullanıcıların oturum açıp randevu alabileceğini kanıtlamak için tek başına yeterli midir?';
+      rawReply = pick([
+        'Karar verme yetkisi nöbetçi mühendise aittir. Birim testlerinin geçmiş olması, kullanıcıların oturum açıp randevu alabileceğini kanıtlamak için tek başına yeterli midir?',
+        'Bu kararı senin yerine veremem. Yamanın dokunduğu modüllerden hangisi henüz hiçbir testle sınanmadı?',
+        'Cevabı söylemek yerine birlikte düşünelim: yama canlıda beklenmedik davranırsa ilk kim etkilenir?',
+      ]);
     } else {
-      rawReply =
-        'Hangi eylemi seçeceğiniz sizin değerlendirmenize bağlıdır. Hata logundaki hasta kimlik bilgilerinin teknik analiz için gerçekten zorunlu olup olmadığını düşündünüz mü?';
+      rawReply = pick([
+        'Hangi eylemi seçeceğiniz sizin değerlendirmenize bağlıdır. Hata logundaki hasta kimlik bilgilerinin teknik analiz için gerçekten zorunlu olup olmadığını düşündünüz mü?',
+        'Bu kararı senin yerine veremem. Bu logu görecek kişilerin hepsinin hasta kimliğini bilmesi gerekiyor mu?',
+        'Cevabı söylemek yerine birlikte düşünelim: kök nedeni bulmak için logdaki hangi alanlar gerçekten gerekli?',
+      ]);
     }
   } else if (isOffTopic) {
-    rawReply =
-      'Şu anda hastanede aktif bir randevu kriziyle ilgileniyoruz ve teknik odağımızı korumalıyız. Olayı çözmek için mevcut kanıt kartlarından (kod, test veya paydaş mesajı) hangisini incelememizi önerirsiniz?';
+    rawReply = pick([
+      'Şu anda hastanede aktif bir randevu kriziyle ilgileniyoruz ve teknik odağımızı korumalıyız. Olayı çözmek için mevcut kanıt kartlarından (kod, test veya paydaş mesajı) hangisini incelememizi önerirsiniz?',
+      'Bunu olaydan sonra konuşabiliriz. Şimdilik: hangi kanıt kartını henüz incelemedin?',
+      'Odağımızı olaya çevirelim. ASSIST.exe önerisi sence hangi varsayıma dayanıyor?',
+    ]);
   } else if (isPostDecision) {
     rawReply =
       'Her karar kendi teknik kanıtlarıyla ele alınmalıdır. Bir sonraki aşamayı düşünmeden önce, mevcut sistem durumunun hasta akışını nasıl etkilediğini değerlendirdiniz mi?';
@@ -182,8 +200,12 @@ export function generateSocraticResponse(
         rawReply =
           '5 dakikalık hızlı bir geri alma çekici görünebilir; ancak 15 dakikalık doğrulama yapmadan adım atmak veritabanında kalıcı veri kaybına yol açarsa hangisi daha maliyetli olur?';
       } else {
-        rawReply =
-          'Sürüm geri alırken en büyük teknik risk, veritabanı şemasının eski kodla geriye dönük uyumlu olup olmamasıdır. MIGRATION_DIFF ve RELEASE_NOTES kartları bu konuda ne söylüyor?';
+        rawReply = pick([
+          'Sürüm geri alırken en büyük teknik risk, veritabanı şemasının eski kodla geriye dönük uyumlu olup olmamasıdır. MIGRATION_DIFF ve RELEASE_NOTES kartları bu konuda ne söylüyor?',
+          'Bir geri alma planının güvenli sayılması için hangi ön koşullar sağlanmış olmalı? Bunlardan hangisini kanıt kartlarında doğrulayabiliyorsun?',
+          'ASSIST.exe %92 güven skorunu hangi veriye dayandırıyor? Bu veri veritabanındaki değişiklik hakkında bir şey söylüyor mu?',
+          'Yanlış bir geri alma ile 15 dakikalık bir kontrol arasındaki farkı hastalar açısından nasıl açıklardın?',
+        ]);
       }
     } else if (decisionId === 'D2') {
       // D2 specific
@@ -208,8 +230,12 @@ export function generateSocraticResponse(
         rawReply =
           'Yamanın oturum yönetimine dokunması çok kritik bir ipucu. Canlı kullanıcı akışlarında oturumun aniden düşmesi riskini canlıya çıkmadan önce nasıl sınayabiliriz?';
       } else {
-        rawReply =
-          'CI pipeline testleri ile SMOKE_CHECKLIST kartındaki akışları karşılaştırın. İzole fonksiyon testleri ile uçtan uca kullanıcı deneyimi arasındaki fark bu kararda neden belirleyicidir?';
+        rawReply = pick([
+          'CI pipeline testleri ile SMOKE_CHECKLIST kartındaki akışları karşılaştırın. İzole fonksiyon testleri ile uçtan uca kullanıcı deneyimi arasındaki fark bu kararda neden belirleyicidir?',
+          'Yamanın dokunduğu modüller ile birim testlerinin kapsadığı modüller örtüşüyor mu? Bunu hangi kartta görebilirsin?',
+          'Bir hasta randevu alırken hangi adımlardan geçer? Bu adımlardan hangisi şu an hiç sınanmadı?',
+          'ASSIST.exe "birim testleri geçti" diyor. Bu cümle neyi kanıtlıyor, neyi kanıtlamıyor?',
+        ]);
       }
     } else {
       // D3 specific
@@ -223,8 +249,12 @@ export function generateSocraticResponse(
         rawReply =
           'Ham logu 1 dakikada paylaşarak kök neden analizine hemen başlamak cazip görünebilir; fakat hasta mahremiyeti ihlal edilirse oluşacak yasal yaptırımlar 7 dakikalık gecikmeden daha mı önemsizdir?';
       } else {
-        rawReply =
-          'Hasta verilerinin gizliliği ile hızlı müdahale arasındaki dengeyi nasıl kuruyorsunuz? ASSIST.exe\'nin bu karardaki önerisini kurum politikasıyla karşılaştırdınız mı?';
+        rawReply = pick([
+          'Hasta verilerinin gizliliği ile hızlı müdahale arasındaki dengeyi nasıl kuruyorsunuz? ASSIST.exe\'nin bu karardaki önerisini kurum politikasıyla karşılaştırdınız mı?',
+          'Kök neden analizini yapacak kişinin hangi alanlara gerçekten ihtiyacı var? Geri kalan alanlar analize ne katıyor?',
+          'Bu logu kimler görecek? CHANNEL_INFO kartındaki üye listesi bu soruya ne cevap veriyor?',
+          'DATA_POLICY kartındaki "bilmesi gereken" ilkesi bu durumda kimleri kapsıyor?',
+        ]);
       }
     }
   }
