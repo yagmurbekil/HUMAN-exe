@@ -1,5 +1,7 @@
 # TUTOR.hlp — Değerlendirme Raporu (Tutor Evaluation Report)
 
+> ⚠️ **Not (30 Ekim 2026):** Bu rapor canlı AI değerlendirmesi değildir. 20 senaryo yalnızca kural tabanlı yedek motorla çalıştırılmış ve otomatik anahtar kelime kurallarıyla puanlanmıştır; manuel anlamsal inceleme yapılmamıştır. Aşağıdaki oranlar Gemini tutor için geçerli değildir. Ayrıntı: [`EVALUATION_STATUS.md`](EVALUATION_STATUS.md).
+
 > **Belge Sürümü:** v2.1  
 > **Tarih:** 29 Ekim 2026  
 > **Uygulama:** HUMAN.exe — The Accountability Protocol  

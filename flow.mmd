@@ -1,0 +1,40 @@
+stateDiagram-v2
+    [*] --> PROFILE
+    PROFILE --> D1_DECIDE: level + role + goal secili / Baslat
+
+    D1_DECIDE --> D1_JUSTIFY: onay D1_VERIFY_SCHEMA (+15 dk)
+    D1_DECIDE --> D1_JUSTIFY: onay D1_ROLLBACK_NOW (+5+20 dk) / +ARCH_RISK
+    D1_JUSTIFY --> D1_CONSEQUENCE: JUSTIFY.dlg Tamam
+    D1_CONSEQUENCE --> D2_DECIDE: Devam
+
+    D2_DECIDE --> D2_JUSTIFY: onay D2_SMOKE_TEST (+10 dk)
+    D2_DECIDE --> D2_JUSTIFY: onay D2_DEPLOY_NOW (+2 dk) / +VERIFY_RISK
+    D2_JUSTIFY --> D2_CONSEQUENCE: JUSTIFY.dlg Tamam
+    D2_CONSEQUENCE --> D3_DECIDE: Devam
+
+    D3_DECIDE --> D3_JUSTIFY: onay D3_REDACT_RESTRICT (+8 dk)
+    D3_DECIDE --> D3_JUSTIFY: onay D3_SHARE_RAW (+1 dk) / +PRIVACY_RISK
+    D3_JUSTIFY --> D3_CONSEQUENCE: JUSTIFY.dlg Tamam
+    D3_CONSEQUENCE --> REPORT: Devam
+
+    state REPORT {
+        [*] --> SAFE_RECOVERY: flags = 0
+        [*] --> UNSAFE_RECOVERY: flags >= 1
+    }
+
+    REPORT --> RESTART_CONFIRM: Yeniden Baslat veya X
+    RESTART_CONFIRM --> REPORT: Hayir
+    RESTART_CONFIRM --> PROFILE: Evet / baglam temizlenir
+
+    note right of D1_DECIDE
+        TUTOR.hlp katmani D_DECIDE ve D_CONSEQUENCE
+        durumlarinda acilir; durumu, secimleri ve
+        bayraklari degistirmez. JUSTIFY sirasinda kapali.
+        Karar degisince sohbet sifirlanir.
+    end note
+
+    note left of RESTART_CONFIRM
+        Baslat menusu > Oturumu Sifirla her durumdan
+        ayni onay penceresini acar. Hayir mevcut
+        duruma dondurur.
+    end note
