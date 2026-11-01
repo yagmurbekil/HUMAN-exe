@@ -7,7 +7,8 @@
 | Görüntü | 780×1688 px (390×844 mobil görünüm, 2× piksel yoğunluğu), H.264, 25 fps |
 | Ses | **Yok** — anlatım yerine videoya üstte altyazı şeridi eklenir |
 | Kaynak | Yerelde çalışan gerçek uygulama (`npm run dev`), headless Google Chrome |
-| Tutor modu | `KURAL TABANLI YEDEK` — kayıt sırasında API anahtarı yoktu, canlı Gemini kullanılmadı |
+| Tutor modu | `KURAL TABANLI YEDEK` — kayıt sırasında API anahtarı yoktu, canlı Gemini kullanılmadı (canlı tutor AI Studio sürümüne sonradan eklendi) |
+| Yayın kopyası | https://youtube.com/shorts/xGhg52Bi7zU |
 | Kayıt tarihi | 30 Ekim 2026 |
 
 ## Videoda gösterilen akış

@@ -12,8 +12,8 @@ Kurgusal bir hastane randevu sistemi olayında, yapay zekâ asistanının (ASSIS
 | [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md) | Ödev gereksinimlerinin durumu ve kanıtları |
 | [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md) | Tutor değerlendirmesinin gerçek durumu |
 
-**Yayınlanmış uygulama bağlantısı:** henüz bu depoda yok (bkz. [Sınırlamalar](#sınırlamalar)).
-**Demo videosu:** [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) — 60,9 sn, 390×844 mobil görünüm, otomatik tarayıcı kaydı, **sessiz** (altyazılı). Yeniden üretim: [`docs/demo/README.md`](docs/demo/README.md).
+**Uygulama (Google AI Studio):** https://ai.studio/apps/8ce3ebbb-ef1a-4b5d-93c8-f8b75ee4c822
+**Demo videosu:** https://youtube.com/shorts/xGhg52Bi7zU · dosya: [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) — 60,9 sn, 390×844 mobil görünüm, otomatik tarayıcı kaydı, **sessiz** (altyazılı). Video, canlı tutor eklenmeden önce yerel sunucudan kaydedildi; tutor yedek modda görünür. Yeniden üretim: [`docs/demo/README.md`](docs/demo/README.md).
 
 ---
 
@@ -27,7 +27,7 @@ Doğrulanan ortam: Windows 11, Node.js 24.22.1, npm 11.17.0.
 npm ci
 ```
 
-İsteğe bağlı canlı tutor için `.env.example` dosyasını `.env` olarak kopyalayıp `GEMINI_API_KEY` değerini girin. Anahtar yoksa tutor otomatik olarak kural tabanlı yedek moda geçer; oyunun geri kalanı anahtarsız çalışır. `.env` dosyaları `.gitignore` ile depo dışında tutulur.
+İsteğe bağlı canlı tutor için `.env.example` dosyasını `.env` olarak kopyalayıp `GEMINI_API_KEY` değerini girin (sunucu sırasıyla `GEMINI_API_KEY`, `GEMINI_API_KEY2`, `API_KEY` değişkenlerini okur; AI Studio anahtarı kendi gizli değişkenlerinden sağlar). Anahtar yoksa tutor otomatik olarak kural tabanlı yedek moda geçer; oyunun geri kalanı anahtarsız çalışır. `.env` dosyaları `.gitignore` ile depo dışında tutulur.
 
 > npm 11, paketlerin kurulum betiklerini varsayılan olarak çalıştırmaz. Cypress çalıştırılabilir dosyası makinede yoksa `npx cypress install` ile indirilebilir.
 
@@ -70,40 +70,44 @@ Profil kararları ve sonu değiştirmez; öğrenme davranışını değiştirir.
 ```
 TutorWindow (istemci)
  ├─ "İpucu İste"  → scenarioData.hintLadder (deterministik, seviyeye göre sınırlı)
- └─ serbest metin → POST /api/tutor (server.ts, 8 sn zaman aşımı)
-                     ├─ GEMINI_API_KEY var → gemini-3.8-flash + Sokratik sistem istemi
-                     │                       → guard (checkForbiddenGuard) + soru kontrolü
-                     │                       → takılırsa ipucu basamağı gösterilir
-                     └─ anahtar yok / hata / zaman aşımı
-                        → istemci: generateSocraticResponse (kural tabanlı yedek)
+ └─ serbest metin → POST /api/tutor (server.ts; istemcide 8 sn zaman aşımı)
+                     ├─ anahtar var → gemini-3.5-flash-lite + Sokratik sistem istemi
+                     │                 (503'te 2 kez artan beklemeli yeniden deneme; 403/429'da denemez)
+                     │                 başarısızsa → gemini-3.5-flash (aynı kurallar)
+                     │                 → guard (checkForbiddenGuard) + soru kontrolü
+                     │                    ├─ geçerse → mode: "live", model: yanıt veren model
+                     │                    └─ takılırsa → ipucu basamağı, mode: "fallback"
+                     └─ anahtar yok / iki model de hata / zaman aşımı
+                        → istemci: generateSocraticResponse (kural tabanlı yedek; tekrar eden
+                          sorulara farklı Sokratik sorularla yanıt verir)
 ```
 
-- API anahtarı yalnızca sunucuda tutulur.
+- API anahtarı yalnızca sunucuda, ortam değişkeninden okunur; depoda anahtar yoktur.
 - Guard, kelime sınırı ve Türkçe `İ/ı` duyarlı bir yasak ifade listesidir. **Tamamlayıcı bir önlemdir; cevap sızdırılmadığının kanıtı değildir.**
-- Penceredeki rozet hangi modun kullanıldığını gösterir: `CANLI AI` veya `KURAL TABANLI YEDEK`.
+- Penceredeki rozet yanıtın gerçek kaynağını gösterir: `CANLI AI` yalnızca guard'a takılmamış canlı model yanıtında görünür; guard devreye girdiğinde, API hata verdiğinde veya henüz canlı yanıt gelmediğinde `KURAL TABANLI YEDEK` görünür.
 - Tutor `JUSTIFY.dlg` açıkken açılamaz; karar değişince sohbet sıfırlanır.
 - Dallanma ve son, LLM çıktısından tamamen bağımsızdır (`src/utils/rules.ts`).
 
 ## Testler
 
-Cypress: 6 spec dosyası, 35 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
+Cypress: 6 spec dosyası, 39 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
 
 | Spec | Test | Kapsam |
 |---|---|---|
 | `onboarding.cy.ts` | 2 | Profil doğrulaması, profil rozeti, QA için sabitlenen kart |
 | `paths.cy.ts` | 8 | 8 karar yolunun son, bayrak ve adım adım saati; onaylı yeniden başlatma |
-| `regression.cy.ts` | 16 | İpucu sızıntısı, guard `İ` ve yanlış pozitif, rol × karar kanıt sırası, saatin geri gitmemesi, tutor sıfırlama, sıfırlama onayı, başlık çubuğundaki Tutor düğmesinin çakışmaması (390 ve 1280 px) |
+| `regression.cy.ts` | 20 | Yedek tutor'un tekrar eden sorulara farklı yanıt vermesi, ipucu sızıntısı, guard `İ` ve yanlış pozitif, rol × karar kanıt sırası, saatin geri gitmemesi, tutor sıfırlama, sıfırlama onayı, başlık çubuğundaki Tutor düğmesinin çakışmaması (390 ve 1280 px) |
 | `responsive.cy.ts` | 4 | 360×640 ve 390×844'te yatay kaydırma yok; üst `TUTOR.hlp` düğmesi ve karar penceresi 360/390 px ekranın içinde |
 | `rules.cy.ts` | 3 | Kural modülü: 8 yolun bayrak, son ve saati (`cypress/fixtures/paths.json`) |
 | `tutor.cy.ts` | 2 | İpucu merdiveni, stub'lı canlı yanıt, `JUSTIFY.dlg` açıkken tutor kilidi |
 
-**Son yerel çalıştırma (30 Ekim 2026, çalışma kopyası `e7066fc` + Tutor düğmesi ve başlık düzeltmeleri):** `npm run lint` ✔, `npm run build` ✔, Cypress **35/35 geçti** (Electron, headless; sunucu API anahtarsız, `/api/health` → `hasKey: false`). Yeni 4 test, düzeltmeler geri alındığında başarısız oluyor ve düzeltmelerle geçiyor.
+**Son yerel çalıştırma (2 Kasım 2026, `main` = `2dc5dc3` + belge ve kilit dosyası düzeltmeleri):** `npm ci` ✔, `npm run lint` ✔, `npm run build` ✔, Cypress **39/39 geçti** (Electron, headless; sunucu API anahtarsız, `/api/health` → `hasKey: false`), `scripts/test-guard-regression.ts` 14/14. Canlı model yanıtları Cypress'te stub'lanır; canlı Gemini otomatik testlerle sınanmaz.
 
 **Otomatik testi olmayanlar:** sızdıran model yanıtıyla guard E2E testi (AE5), yedek mod rozeti, profil değişmezliği, `JUSTIFY.dlg` için Esc/arka plan davranışı, tablet görünümü.
 
 ## Tutor değerlendirmesi
 
-`eval/` altında 20 senaryoluk iki rapor vardır (`tutor-evaluation.md`, `tutor-evaluation-v2.md`). **Bunlar canlı AI değerlendirmesi değildir:** canlı Gemini çağrısı HTTP 403 döndüğü için tüm senaryolar kural tabanlı yedek motorla çalıştırılmış ve otomatik anahtar kelime kurallarıyla puanlanmıştır. Manuel anlamsal inceleme yapılmamıştır. Ayrıntı ve eksik alanlar: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
+`eval/` altında 20 senaryoluk iki rapor vardır (`tutor-evaluation.md`, `tutor-evaluation-v2.md`). **Bunlar canlı AI değerlendirmesi değildir:** raporlar canlı Gemini henüz çalışmazken (HTTP 403) üretildi; tüm senaryolar kural tabanlı yedek motorla çalıştırılıp otomatik anahtar kelime kurallarıyla puanlandı. Canlı tutor daha sonra AI Studio'da D1, D2 ve D3 için elle denendi, ancak 20 senaryo canlı modelle yeniden çalıştırılmadı ve manuel anlamsal inceleme yapılmadı. Ayrıntı ve eksik alanlar: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
 
 ## Bilinçli olarak dışlanan üç özellik
 
@@ -113,11 +117,11 @@ Cypress: 6 spec dosyası, 35 test (`cypress/e2e/`). LLM çağrıları `cy.interc
 
 ## Sınırlamalar
 
-- **Canlı Gemini API test edilmedi** (AI Studio projesinde HTTP 403). `gemini-3.8-flash` model kimliği gerçek bir çağrıyla doğrulanmadı.
-- **Yayınlanmış Google AI Studio bağlantısı** bu depoda kayıtlı değil.
-- **Tutor değerlendirmesi** yalnızca yedek motor ve otomatik puanlamayla yapıldı; manuel inceleme eksik.
+- **Canlı tutor yalnızca elle denendi:** AI Studio'da D1–D3 için `gemini-3.5-flash-lite` yanıtları alındı; bu denemelerin kaydı depoda yok ve canlı model için otomatik test yoktur. Ücretsiz katman kotası (429) veya yoğunluk (503) durumunda tutor yedek moda düşer.
+- **Tutor değerlendirmesi** (20 senaryo) yalnızca yedek motor ve otomatik puanlamayla yapıldı; canlı modelle tekrarı ve manuel inceleme eksik.
+- İstemci 8 sn sonra yedek moda geçer; sunucudaki yeniden denemeler ve ikinci model bu süreyi aşarsa öğrenci yedek yanıtı görür.
 - **Gerçek kullanıcı değerlendirmesi** yapılmadı.
-- **Demo videosu sessizdir** ve yayınlanmış sürümden değil yerel sunucudan kaydedildi; tutor yedek modda.
+- **Demo videosu sessizdir** ve canlı tutor eklenmeden önce yerel sunucudan kaydedildi; videoda tutor yedek modda.
 - Tutor'un karar sonrası açıklama modu yok; sonuç ekranında da karar öncesi kurallarla yanıt verir.
 - Gövde metni çoğunlukla 10–11 px; erişilebilirlik hedefi (≥ 16 px) karşılanmıyor.
 - Oturum kalıcılığı yok; sayfa yenilenince profil ekranına dönülür.

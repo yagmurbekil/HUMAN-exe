@@ -105,9 +105,10 @@ Profil kararları, seçenekleri, bayrakları, saati ve sonu **değiştirmez**; y
 ## 8. Sokratik tutor (`TUTOR.hlp`)
 
 - **Hazır ipucu merdiveni:** deterministik, seviyeye göre 3/2/1 basamak. Basamaklar seçenek adı, eylem buyruğu veya ASSIST.exe hakkında doğru/yanlış yargısı içermez; 3. basamak bir kavramı tanımlayıp soruyla biter.
-- **Serbest metin:** istemci `POST /api/tutor` çağırır; sunucu (`server.ts`) API anahtarını tutar ve `gemini-3.8-flash` modelini Sokratik sistem istemiyle çağırır. Yanıt guard'a takılırsa veya soru içermezse yerine ipucu basamağı gösterilir.
+- **Serbest metin:** istemci `POST /api/tutor` çağırır; sunucu (`server.ts`) API anahtarını ortam değişkeninden okur (`GEMINI_API_KEY`, `GEMINI_API_KEY2`, `API_KEY`) ve `gemini-3.5-flash-lite` modelini Sokratik sistem istemiyle çağırır. 503 yanıtında 2 kez artan beklemeyle yeniden dener (403/429'da denemez); birincil model başarısız olursa `gemini-3.5-flash` denenir. Yanıt JSON'unda `model` alanı yanıtı gerçekten veren modeli gösterir.
+- **Yanıt kaynağı:** guard'a takılmayan ve soru içeren model yanıtı `mode: "live"` olarak döner ve rozet `CANLI AI` olur. Yanıt guard'a takılırsa veya soru içermezse yerine ipucu basamağı gösterilir, `mode: "fallback"` döner ve rozet `KURAL TABANLI YEDEK` olur. Rozet, ilk gerçek canlı yanıta kadar `KURAL TABANLI YEDEK` kalır.
 - **Guard** (`checkForbiddenGuard`): `FORBIDDEN_TERMS` listesi, kelime sınırı duyarlı ve Türkçe büyük/küçük harf (`İ`, `ı`) duyarlı eşleşme. **Tamamlayıcı bir önlemdir; sızıntı olmadığının kanıtı değildir** (çekimli veya dolaylı ifadeleri kaçırabilir).
-- **Yedek mod:** anahtar yoksa, istek hata verirse veya 8 sn içinde yanıt gelmezse istemci kural tabanlı motoru (`generateSocraticResponse`) kullanır; rozet `KURAL TABANLI YEDEK`. Dallanma ve son LLM çıktısından bağımsızdır.
+- **Yedek mod:** anahtar yoksa, iki model de hata verirse veya 8 sn içinde yanıt gelmezse istemci kural tabanlı motoru (`generateSocraticResponse`) kullanır; rozet `KURAL TABANLI YEDEK`. Genel yanıtlar, öğrencinin o karardaki soru sayısına göre farklı Sokratik sorular arasında döner. Dallanma ve son LLM çıktısından bağımsızdır.
 - Tutor `JUSTIFY.dlg` açıkken açılamaz; karar değişince sohbet geçmişi sıfırlanır.
 
 ## 9. Durum makinesi
@@ -133,11 +134,11 @@ Seçiciler `data-cy` öznitelikleridir. "Otomatik test" sütunu yalnızca gerçe
 | **AE6** Sıfırlama onayı | *When* Başlat menüsünden "Oturumu Sıfırla" seçilir, *then* onay penceresi açılır; `Hayır` oturumu korur, `Evet` profil ekranına döner. | `regression.cy.ts` |
 | **AE7** Saat geri gitmez | *When* `D1_ROLLBACK_NOW` ardından `D2_DEPLOY_NOW` seçilir, *then* saat 08:25 → 08:27 olur. | `regression.cy.ts`, `rules.cy.ts` |
 
-**Ek kriterler ve durumları:** 360×640 ve 390×844'te yatay kaydırma yok (`responsive.cy.ts`); `JUSTIFY.dlg` açıkken tutor düğmesi devre dışı (`tutor.cy.ts`); yedek mod rozeti, profil değişmezliği (aynı seçimler farklı profillerde aynı son) ve `JUSTIFY.dlg` için Esc/arka plan davranışı için otomatik test **yok**.
+**Ek kriterler ve durumları:** 360×640 ve 390×844'te yatay kaydırma yok (`responsive.cy.ts`); `JUSTIFY.dlg` açıkken tutor düğmesi devre dışı (`tutor.cy.ts`); API hatasında yedek mod rozeti ve değişen yedek yanıtlar (`regression.cy.ts`); profil değişmezliği (aynı seçimler farklı profillerde aynı son) ve `JUSTIFY.dlg` için Esc/arka plan davranışı için otomatik test **yok**.
 
 ## 11. Değerlendirme
 
-- Cypress: 6 spec, 31 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
-- Tutor değerlendirmesi: `eval/` altındaki 20 senaryo **yalnızca kural tabanlı yedek motorla ve otomatik anahtar kelime puanlamasıyla** çalıştırıldı; canlı Gemini (HTTP 403) ve manuel anlamsal inceleme yapılmadı. Ayrıntı: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
+- Cypress: 6 spec, 39 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
+- Tutor değerlendirmesi: `eval/` altındaki 20 senaryo **yalnızca kural tabanlı yedek motorla ve otomatik anahtar kelime puanlamasıyla** çalıştırıldı (o sırada canlı Gemini HTTP 403 veriyordu). Canlı tutor sonradan AI Studio'da D1–D3 için elle denendi; 20 senaryonun canlı modelle tekrarı ve manuel anlamsal inceleme yapılmadı. Ayrıntı: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
 - 60 sn demo: [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) (otomatik tarayıcı kaydı, sessiz).
 - Gerçek kullanıcı değerlendirmesi: yapılmadı (bkz. [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md)).
