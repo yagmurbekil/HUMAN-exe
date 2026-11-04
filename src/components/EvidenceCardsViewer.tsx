@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EvidenceCard, Level } from '../types';
 import { GLOSSARY } from '../data/scenarioData';
 
@@ -6,13 +6,21 @@ interface EvidenceCardsViewerProps {
   cards: EvidenceCard[];
   level: Level | null;
   pinnedCardId?: string;
+  onCardViewed?: (cardId: string) => void; // behaviour telemetry (model input `kart_orani`)
 }
 
 export const EvidenceCardsViewer: React.FC<EvidenceCardsViewerProps> = ({
   cards,
   level,
+  onCardViewed,
 }) => {
   const [activeCardId, setActiveCardId] = useState<string>(cards[0]?.id || '');
+
+  // The first (pinned) card is shown on open, so it counts as viewed
+  useEffect(() => {
+    if (cards[0]) onCardViewed?.(cards[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [activeGlossaryTerm, setActiveGlossaryTerm] = useState<string | null>(null);
 
   // Fallback to first if active not in cards
@@ -95,7 +103,10 @@ export const EvidenceCardsViewer: React.FC<EvidenceCardsViewerProps> = ({
             <button
               key={card.id}
               type="button"
-              onClick={() => setActiveCardId(card.id)}
+              onClick={() => {
+                setActiveCardId(card.id);
+                onCardViewed?.(card.id);
+              }}
               className={`win95-tab text-xs flex items-center gap-1 ${
                 isActive ? 'win95-tab-active font-bold text-black' : 'text-gray-700 hover:text-black'
               }`}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   DecisionId,
   DecisionOption,
@@ -17,6 +17,18 @@ import { ReportWindow } from './ReportWindow';
 import { TutorWindow } from './TutorWindow';
 import { ConfirmRestartDialog } from './ConfirmRestartDialog';
 import { getClockAfterDecision } from '../utils/rules';
+import { DataCollectionPanel } from './DataCollectionPanel';
+import {
+  DecisionBehaviour,
+  Features,
+  SessionRow,
+  appendStoredRows,
+  buildFeatures,
+  buildRow,
+  isDataCollectionMode,
+  setDataCollectionPreference,
+  newSessionId,
+} from '../utils/telemetry';
 
 export const Desktop: React.FC = () => {
   // Core Simulation State
@@ -47,6 +59,19 @@ export const Desktop: React.FC = () => {
   const [isSystemInfoOpen, setIsSystemInfoOpen] = useState<boolean>(false);
   const [isRestartConfirmOpen, setIsRestartConfirmOpen] = useState<boolean>(false);
 
+  // Behaviour telemetry (spec.md §12). Rows are persisted only in data-collection mode (?veri=1).
+  const [collectMode, setCollectMode] = useState<boolean>(() => isDataCollectionMode());
+  const sessionIdRef = useRef<string>(newSessionId());
+  const [sessionRows, setSessionRows] = useState<SessionRow[]>([]);
+  const [pendingFeatures, setPendingFeatures] = useState<Features | null>(null);
+  const [tutorOpenedFor, setTutorOpenedFor] = useState<Record<DecisionId, boolean>>({
+    D1: false,
+    D2: false,
+    D3: false,
+  });
+  // State (not a ref) so the data panel re-reads the store after this session is appended
+  const [sessionSaved, setSessionSaved] = useState<boolean>(false);
+
   // Active decision data
   const currentDecision = DECISIONS[activeDecisionId];
 
@@ -57,7 +82,19 @@ export const Desktop: React.FC = () => {
     setCurrentClock('08:00');
   };
 
-  const handleConfirmDecision = (option: DecisionOption) => {
+  const handleConfirmDecision = (option: DecisionOption, behaviour: DecisionBehaviour) => {
+    const prior = Object.values(records);
+    setPendingFeatures(
+      buildFeatures({
+        level: profile.level,
+        decision: currentDecision,
+        behaviour,
+        tutorOpened: tutorOpenedFor[activeDecisionId],
+        hintsUsed: hintStepsUsed[activeDecisionId] || 0,
+        priorRisky: prior.filter((r) => r.flagIncurred).length,
+        priorMisaligned: prior.filter((r) => !r.isJustificationAligned).length,
+      })
+    );
     setPendingOption(option);
     // Transition to justification modal
     if (activeDecisionId === 'D1') setState('D1_JUSTIFY');
@@ -100,6 +137,12 @@ export const Desktop: React.FC = () => {
       [activeDecisionId]: newRecord,
     }));
 
+    if (pendingFeatures) {
+      const row = buildRow(sessionIdRef.current, activeDecisionId, pendingFeatures, pendingOption);
+      setSessionRows((prev) => [...prev, row]);
+      setPendingFeatures(null);
+    }
+
     // Move to consequence state
     if (activeDecisionId === 'D1') setState('D1_CONSEQUENCE');
     else if (activeDecisionId === 'D2') setState('D2_CONSEQUENCE');
@@ -135,7 +178,27 @@ export const Desktop: React.FC = () => {
     setIsAssistInfoOpen(false);
     setIsSystemInfoOpen(false);
     setIsRestartConfirmOpen(false);
+    sessionIdRef.current = newSessionId();
+    setSessionRows([]);
+    setPendingFeatures(null);
+    setTutorOpenedFor({ D1: false, D2: false, D3: false });
+    setSessionSaved(false);
   };
+
+  // A tutor opened while the decision is still open counts as "tutor_acildi" for that decision
+  useEffect(() => {
+    if (isTutorOpen && state === `${activeDecisionId}_DECIDE`) {
+      setTutorOpenedFor((prev) => (prev[activeDecisionId] ? prev : { ...prev, [activeDecisionId]: true }));
+    }
+  }, [isTutorOpen, state, activeDecisionId]);
+
+  // In data-collection mode, a finished session's rows are appended to this browser's store once
+  useEffect(() => {
+    if (collectMode && state === 'REPORT' && !sessionSaved && sessionRows.length === 3) {
+      appendStoredRows(sessionRows);
+      setSessionSaved(true);
+    }
+  }, [collectMode, state, sessionRows, sessionSaved]);
 
   // Every restart entry point asks for confirmation first (spec §10)
   const requestRestart = () => {
@@ -167,6 +230,14 @@ export const Desktop: React.FC = () => {
             <span className="text-[10px] bg-black/40 px-1.5 py-0.5 border border-white/20">
               Şifa Kent Hastanesi
             </span>
+            {collectMode && (
+              <span
+                className="text-[10px] bg-[#C00000] text-white px-1.5 py-0.5 border border-white/40 font-bold"
+                data-cy="data-mode-badge"
+              >
+                VERİ TOPLAMA MODU
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">
@@ -250,6 +321,10 @@ export const Desktop: React.FC = () => {
             />
           )}
         </main>
+
+        {state === 'REPORT' && collectMode && (
+          <DataCollectionPanel sessionSaved={sessionSaved} />
+        )}
       </div>
 
       {/* JUSTIFY.dlg Modal Dialog (Active on confirm) */}
@@ -461,6 +536,20 @@ export const Desktop: React.FC = () => {
               >
                 <span>💡</span>
                 <span>Yardım &amp; Tutor (TUTOR.hlp)</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const next = !collectMode;
+                  setDataCollectionPreference(next);
+                  setCollectMode(next);
+                  setIsStartMenuOpen(false);
+                }}
+                data-cy="start-menu-data-mode"
+                className="w-full text-left px-2 py-1.5 flex items-center gap-2 hover:bg-[#000080] hover:text-white"
+              >
+                <span>💾</span>
+                <span>Veri Toplama Modu: {collectMode ? 'Açık' : 'Kapalı'}</span>
               </button>
 
               <div className="border-t border-[#808080] my-1" />

@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { DecisionDefinition, DecisionOption, OptionId, UserProfile } from '../types';
 import { EvidenceCardsViewer } from './EvidenceCardsViewer';
 import { getOrderedEvidenceCards, GOAL_CONFIG } from '../data/scenarioData';
+import { DecisionBehaviour } from '../utils/telemetry';
 
 interface IncidentDecisionWindowProps {
   decision: DecisionDefinition;
   profile: UserProfile;
   currentClock: string;
-  onConfirmDecision: (option: DecisionOption) => void;
+  onConfirmDecision: (option: DecisionOption, behaviour: DecisionBehaviour) => void;
   onOpenTutor: () => void;
 }
 
@@ -20,6 +21,19 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
 }) => {
   const [selectedOptionId, setSelectedOptionId] = useState<OptionId | null>(null);
 
+  // Behaviour telemetry for the blind-acceptance model (spec.md §12)
+  const openedAtRef = useRef<number>(Date.now());
+  const viewedCardsRef = useRef<Set<string>>(new Set());
+  const selectionChangesRef = useRef<number>(0);
+  const lastSelectedRef = useRef<OptionId | null>(null);
+
+  // label onClick and radio onChange both fire per click; the ref keeps the count at one per change
+  const selectOption = (id: OptionId) => {
+    if (lastSelectedRef.current !== null && lastSelectedRef.current !== id) selectionChangesRef.current += 1;
+    lastSelectedRef.current = id;
+    setSelectedOptionId(id);
+  };
+
   const orderedCards = getOrderedEvidenceCards(decision.evidenceCards, profile.role, decision.id);
   const goalConfig = profile.goal ? GOAL_CONFIG[profile.goal] : null;
   const isFocusDecision = goalConfig?.focusDecision === decision.id;
@@ -28,7 +42,11 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
 
   const handleConfirm = () => {
     if (selectedOption) {
-      onConfirmDecision(selectedOption);
+      onConfirmDecision(selectedOption, {
+        durationSec: (Date.now() - openedAtRef.current) / 1000,
+        viewedCardIds: Array.from(viewedCardsRef.current),
+        selectionChanges: selectionChangesRef.current,
+      });
     }
   };
 
@@ -124,6 +142,7 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
           cards={orderedCards}
           level={profile.level}
           pinnedCardId={orderedCards[0]?.id}
+          onCardViewed={(id) => viewedCardsRef.current.add(id)}
         />
 
         {/* ASSIST.exe AI Recommendation Box */}
@@ -173,13 +192,13 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
                       ? 'bg-[#000080] text-white border-[#000080]'
                       : 'bg-white text-black border-[#808080] hover:bg-[#F2F2F2]'
                   }`}
-                  onClick={() => setSelectedOptionId(opt.id)}
+                  onClick={() => selectOption(opt.id)}
                 >
                   <input
                     type="radio"
                     name={`decision-${decision.id}`}
                     checked={isSelected}
-                    onChange={() => setSelectedOptionId(opt.id)}
+                    onChange={() => selectOption(opt.id)}
                     className="mt-0.5 cursor-pointer shrink-0"
                   />
                   <div className="flex-1">

@@ -1,5 +1,5 @@
 # HUMAN.exe — The Accountability Protocol
-## SE Primer Spesifikasyonu (v2.2 — uygulanan sürüm)
+## SE Primer Spesifikasyonu (v2.2 — uygulanan sürüm · v3.0 model eki: §12)
 
 > Bu belge bir öğrenme simülasyonunun spesifikasyonudur; gerçek operasyonel, tıbbi veya hukuki tavsiye içermez. Tüm kişiler, sistemler ve veriler kurgusaldır.
 
@@ -142,3 +142,76 @@ Seçiciler `data-cy` öznitelikleridir. "Otomatik test" sütunu yalnızca gerçe
 - Tutor değerlendirmesi: `eval/` altındaki 20 senaryo **yalnızca kural tabanlı yedek motorla ve otomatik anahtar kelime puanlamasıyla** çalıştırıldı (o sırada canlı Gemini HTTP 403 veriyordu). Canlı tutor sonradan AI Studio'da D1–D3 için elle denendi; 20 senaryonun canlı modelle tekrarı ve manuel anlamsal inceleme yapılmadı. Ayrıntı: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
 - 60 sn demo: [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) (otomatik tarayıcı kaydı, sessiz).
 - Gerçek kullanıcı değerlendirmesi: yapılmadı (bkz. [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md)).
+
+---
+
+## 12. Model eki (Ödev 7 — The Primer v2): Körü körüne onay riski
+
+> Bu bölüm **eğitimden önce** yazılmıştır (4 Kasım 2026). Eşik ve metrik eğitim sonuçları görüldükten sonra değiştirilmez; değişirse sürüm notunda gerekçesiyle belirtilir.
+
+### 12.1 Problem ve model gereksinimi
+
+v2.2'deki uyum sabit kurallara dayanır (seviye, rol, hedef). v3.0'da uyumun bir kısmı oyuncunun **o andaki davranışından** öğrenen küçük bir modele bağlanır.
+
+**Soru:** *"Bu oyuncu bu kararı kanıtları incelemeden, ASSIST.exe'ye ya da hıza güvenerek mi veriyor?"* Bu, otomasyon yanlılığının (automation bias) davranışsal bir göstergesidir.
+
+- **Model:** ikili sınıflandırıcı, `StandardScaler` + `LogisticRegression` (`random_state=42`), `sklearn → ONNX`.
+- **Çıktı:** `p_kor_onay` ∈ [0, 1], seçilen seçeneğin riskli (bayraklı) olma olasılığı.
+- **Etiket (`riskli_secim`):** seçilen seçeneğin `flag` alanı doluysa 1 (`D1_ROLLBACK_NOW`, `D2_DEPLOY_NOW`, `D3_SHARE_RAW`), değilse 0.
+- **Çalışma anı:** oyuncu `Kararı Onayla`ya bastığı an, `JUSTIFY.dlg` açılmadan önce.
+- **Sızıntı kuralı:** seçilen seçeneğin kimliği veya metni **girdi değildir**. Model yalnızca davranışa bakar; cevabı bilmez.
+
+**Girdiler** (sıra `model/config.json` sözleşmesindeki sıradır; tanım ve birimler: [`data/SOZLUK.md`](data/SOZLUK.md)):
+
+| # | Özellik | Açıklama |
+|---|---|---|
+| 1 | `seviye` | 0 Başlangıç, 1 Orta, 2 İleri |
+| 2 | `karar_no` | 1, 2, 3 |
+| 3 | `karar_suresi_sn` | Karar ekranının açılmasından onaya kadar geçen süre |
+| 4 | `kart_orani` | Açılan farklı kanıt kartı / o karardaki toplam kart |
+| 5 | `tutor_acildi` | Bu kararda tutor açıldı mı (0/1) |
+| 6 | `ipucu_sayisi` | Bu kararda kullanılan hazır ipucu sayısı |
+| 7 | `secim_degisikligi` | Seçenekler arasında geçiş sayısı (ilk seçimden sonraki değişiklikler) |
+| 8 | `onceki_riskli` | Bu oturumdaki önceki kararlarda yapılan riskli seçim sayısı |
+| 9 | `onceki_uyumsuz` | Önceki kararlarda ilkeyle uyumsuz gerekçe sayısı |
+
+### 12.2 Oyunun davranışını nasıl değiştirir
+
+- `p_kor_onay ≥ karar_esigi` (`config.json`, başlangıç değeri 0.5) ise `JUSTIFY.dlg`'den önce **`DOGRULA.dlg` — "Dur ve doğrula"** penceresi açılır:
+  - incelenmemiş kanıt kartlarını listeler,
+  - tutor'dan bir Sokratik soru gösterir,
+  - iki düğme sunar: `Kararımı gözden geçir` (karar ekranına döner, seçim korunur) ve `Kararımda eminim` (`JUSTIFY.dlg`'ye geçer).
+- `p_kor_onay < karar_esigi` ise akış v2.2'deki gibidir.
+- Pencere **seçime göre değil davranışa göre** açılır. Doğru seçeneği gösterecek bir ipucu içermez; yalnızca doğrulama davranışını teşvik eder.
+- Kararlar, 8 yol, bayraklar, saat ve sonlar değişmez (`src/utils/rules.ts`). Model yalnızca bu ek pencerenin açılıp açılmayacağına karar verir.
+- **Veri toplama modunda** (`?veri=1`) müdahale kapalıdır; aksi hâlde model kendi eğitim verisini etkilerdi.
+
+### 12.3 Veri
+
+- Her karar bir satır: `data/oturumlar.csv`. Sütunlar: `oturum_id`, `karar_id`, 9 girdi, `riskli_secim`, `kaynak` (`gercek` | `sentetik`), `uygulama_surumu`.
+- **Gerçek veri:** en az **15 gerçek oturum** (≥ 45 satır), en az 3 farklı oyuncu. Veri toplama modu oturum sonunda satırları tarayıcıda biriktirir ve CSV olarak indirtir; sunucuya hiçbir şey gönderilmez.
+- **KVKK:** ad, e-posta, cihaz kimliği, IP, konum, zaman damgası toplanmaz. `oturum_id` her oturumda rastgele üretilir; oyuncuyla eşleştirilemez.
+- **Sentetik veri** serbesttir; üretici kural ve tohum README'de yazılıdır, satırlar `kaynak=sentetik` ile işaretlenir.
+
+### 12.4 Eval metriği ve kabul eşiği (altın standart)
+
+| Kural | Değer |
+|---|---|
+| Bölme | Katmanlı (stratified) %70 eğitim / %30 test, `random_state=42` |
+| **Birincil metrik** | Test kümesinde **ROC-AUC ≥ 0.70** |
+| İkincil metrik | Riskli sınıf için duyarlılık (recall, eşik 0.5) **≥ 0.60** |
+| Taban karşılaştırması | Dengeli doğruluk (balanced accuracy), her zaman çoğunluk sınıfını tahmin eden taban modelden (0.50) yüksek olmalı |
+| Veri kapısı | En az 15 gerçek oturum yoksa eğitim durur |
+| ONNX eşdeğerliği | ONNX ve sklearn olasılıkları arasındaki fark ≤ `1e-4` |
+
+Kurallardan biri sağlanmazsa `train.py` sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` yazılmaz. **Eşiği geçmeyen model yayınlanmaz.** Metrikler `model/config.json`'a yazılır. Ayrıca yalnızca gerçek satırlardan oluşan test alt kümesinin metrikleri de raporlanır; sentetik veri sonucu şişirebilir.
+
+### 12.5 Yeni kabul örnekleri
+
+| Kod | Given / When / Then | Otomatik test |
+|---|---|---|
+| **AE8** Model davranışı değiştirir | *Given* model yüklü ve veri toplama modu kapalı, *when* oyuncu tek kanıt kartını açıp 5 sn içinde onaylar ve `p_kor_onay ≥ karar_esigi` olur, *then* `JUSTIFY.dlg`'den önce `DOGRULA.dlg` açılır ve incelenmemiş kartları listeler; *when* aynı karar tüm kartlar incelenip tutor kullanılarak verilir ve `p_kor_onay < karar_esigi` olur, *then* doğrudan `JUSTIFY.dlg` açılır. | Cypress (planlandı) |
+| **AE9** Parite (diferansiyel test) | *Given* `tests/parite.json` içindeki 5 referans girdi ve Python test kahininin (`tests/parite.py`) olasılıkları, *when* aynı girdiler uygulamadaki `onnxruntime-web` çıkarımına verilir, *then* her girdide `|p_uygulama − p_python| < 1e-4` olur. | Cypress `data-cy="p"` (planlandı) |
+| **AE10** Eval kapısı | *Given* test kümesinde ROC-AUC < 0.70 veya gerçek oturum sayısı < 15, *when* `python train.py` çalıştırılır, *then* betik sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` oluşturulmaz. | `train.py` (planlandı) |
+
+**Regresyon:** v2.2'nin 39 Cypress testi model devreye girdikten sonra da değişmeden geçmelidir. Bu testlerde model kapalıdır ya da müdahalesi testi etkilemeyecek şekilde ayarlanır.
