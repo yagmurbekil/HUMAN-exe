@@ -38,6 +38,11 @@ Cypress.Commands.add('makeDecisionAndJustify', (choiceId: string, justifyIndex =
   cy.get(`[data-cy="choice-${choiceId}"]`).click();
   cy.get('[data-cy="confirm-decision-btn"]').should('not.be.disabled').click();
 
+  // With ?model=1 the model may open DOGRULA.dlg first; the player keeps the decision
+  cy.get('[data-cy="justify-dlg"], [data-cy="dogrula-dlg"]', { timeout: 20000 }).then(($dialog) => {
+    if ($dialog.is('[data-cy="dogrula-dlg"]')) cy.get('[data-cy="dogrula-eminim"]').click();
+  });
+
   // Justify modal
   cy.get('[data-cy="justify-dlg"]').should('be.visible');
   cy.get(`[data-cy="justification-option-${justifyIndex}"]`).click();

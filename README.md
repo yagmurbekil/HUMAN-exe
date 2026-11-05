@@ -17,6 +17,38 @@ Kurgusal bir hastane randevu sistemi olayında, yapay zekâ asistanının (ASSIS
 
 ---
 
+## Ödev 7 — The Primer v2: küçük model
+
+Oyuncu `Kararı Onayla`ya bastığında küçük bir lojistik regresyon, davranışına bakarak **körü körüne onay riskini** (`p_kor_onay`) hesaplar. `p >= 0.5` ise `DOGRULA.dlg` açılır: incelenmemiş kanıt kartlarını listeler ve kararı gözden geçirmeyi önerir. Seçilen seçenek girdi değildir; model yalnızca davranışa bakar ve cevabı söylemez. Aynı sahnede acele eden oyuncu uyarı alır (p≈0.66), kartları inceleyip tutor kullanan oyuncu almaz (p≈0.01).
+
+| | |
+|---|---|
+| Spec, metrik, eşik | [`spec.md` §12](spec.md) |
+| Veri | [`data/oturumlar.csv`](data/oturumlar.csv), [`data/SOZLUK.md`](data/SOZLUK.md) |
+| Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı), [Hugging Face](https://huggingface.co/yagmurbekil/human-exe-blind-accept-onnx) |
+| Yayın, rollback, ödünleşim | [`RELEASE.md`](RELEASE.md) |
+| Parite | [`tests/parite.py`](tests/parite.py), [`tests/parite.json`](tests/parite.json) |
+| Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz) |
+| Sınav tasarımı | [`SINAV_TASARIMI.md`](SINAV_TASARIMI.md) |
+
+**Kurulum (3 komut):**
+
+```bash
+py -3.13 -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+.venv/Scripts/python train.py
+```
+
+`train.py` tek komutla çalışır, sabit tohum kullanır, metrikleri `model/config.json`'a yazar ve eşik altında sıfırdan farklı kodla durur. Sentetik satırları yeniden üretmek için: `.venv/Scripts/python scripts/veri_uret.py` (tohum 20261106, 60 oturum; kural betiğin başında).
+
+**Metrikler (eşikler eğitimden önce yazıldı):** test ROC-AUC 0.7330 (≥ 0.70), recall 0.7619 (≥ 0.60), dengeli doğruluk 0.6788, oturum bazlı 5 katlı CV ROC-AUC 0.7791, ONNX↔sklearn farkı 6.8e-08. İlk deneme recall 0.5238 ile kapıda durdu ([`RELEASE.md`](RELEASE.md)).
+
+**Dürüstlük notu:** 15 "gerçek" oturumun tamamını geliştirici tek başına, rastgele cevaplarla oynadı; 3 farklı oyuncu hedefi karşılanmadı. Gerçek test satırlarındaki AUC 0.5083'tür (16 satır), yani model gerçek oyuncu davranışını öğrendiğini göstermiyor. Kanıt inceleme etkisi sentetik veriden gelir. Parite testi modelin üç ortamda aynı hesaplandığını kanıtlar, doğru olduğunu değil.
+
+**Senaryo gözlemi:** Veri toplarken seçeneklerin fazla bariz olduğu görüldü: ASSIST.exe'nin önerisi ve "doğrula, test et, maskele" seçenekleri kanıt okumadan ayırt edilebiliyor. Bu nedenle gerçek oyuncu verisi de tek başına anlamlı bir öğrenme sinyali vermeyebilir; bir sonraki sürümde güvenli seçeneğin de maliyetli olduğu daha dengeli ikilemler gerekir.
+
+---
+
 ## Kurulum
 
 Paket yöneticisi olarak **npm** kullanılır; tek kilit dosyası `package-lock.json`'dır.
@@ -42,6 +74,7 @@ npm ci
 | `npm run test:cypress` | Tüm Cypress testlerini headless çalıştırır — **önce `npm run dev` çalışıyor olmalı** (`baseUrl: http://localhost:3000`) |
 | `npm run cypress:open` | Cypress arayüzü |
 | `npx tsx scripts/test-guard-regression.ts` | Guard ve yedek tutor regresyon betiği |
+| `npm run demo:model` | Ödev 7 iki oyunculu demoyu kaydeder (`npm run dev` çalışıyor olmalı) |
 | `npm run demo:record` | 60 sn demo videosunu yeniden kaydeder (`npm run dev` çalışıyor olmalı; yerel Chrome gerekir) — bkz. [`docs/demo/README.md`](docs/demo/README.md) |
 
 ## Oyun akışı
@@ -90,10 +123,12 @@ TutorWindow (istemci)
 
 ## Testler
 
-Cypress: 6 spec dosyası, 39 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
+Cypress: 8 spec dosyası, 57 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
 
 | Spec | Test | Kapsam |
 |---|---|---|
+| `model.cy.ts` | 15 | Python, tarayıcı ve sunucu paritesi (5 referans, tolerans 1e-4), `DOGRULA.dlg` davranışı, model inmezse oyunun sürmesi, veri modunda modelin kapalı olması |
+| `data-collection.cy.ts` | 3 | Veri satırları, kişisel veri olmaması, menü anahtarı |
 | `onboarding.cy.ts` | 2 | Profil doğrulaması, profil rozeti, QA için sabitlenen kart |
 | `paths.cy.ts` | 8 | 8 karar yolunun son, bayrak ve adım adım saati; onaylı yeniden başlatma |
 | `regression.cy.ts` | 20 | Yedek tutor'un tekrar eden sorulara farklı yanıt vermesi, ipucu sızıntısı, guard `İ` ve yanlış pozitif, rol × karar kanıt sırası, saatin geri gitmemesi, tutor sıfırlama, sıfırlama onayı, başlık çubuğundaki Tutor düğmesinin çakışmaması (390 ve 1280 px) |
@@ -101,9 +136,9 @@ Cypress: 6 spec dosyası, 39 test (`cypress/e2e/`). LLM çağrıları `cy.interc
 | `rules.cy.ts` | 3 | Kural modülü: 8 yolun bayrak, son ve saati (`cypress/fixtures/paths.json`) |
 | `tutor.cy.ts` | 2 | İpucu merdiveni, stub'lı canlı yanıt, `JUSTIFY.dlg` açıkken tutor kilidi |
 
-**Son yerel çalıştırma (2 Kasım 2026, `main` = `2dc5dc3` + belge ve kilit dosyası düzeltmeleri):** `npm ci` ✔, `npm run lint` ✔, `npm run build` ✔, Cypress **39/39 geçti** (Electron, headless; sunucu API anahtarsız, `/api/health` → `hasKey: false`), `scripts/test-guard-regression.ts` 14/14. Canlı model yanıtları Cypress'te stub'lanır; canlı Gemini otomatik testlerle sınanmaz.
+**Son yerel çalıştırma (6 Kasım 2026):** `npm run lint` ✔, `npm run build` ✔, Cypress **57/57 geçti** (Electron, headless; API anahtarsız), `tests/eval_kapisi.py` 4/4, `tests/parite.py --kontrol` geçti (en büyük fark 5e-09). `paths.cy.ts` model açıkken çalışır; canlı Gemini Cypress'te stub'lanır.
 
-**Otomatik testi olmayanlar:** sızdıran model yanıtıyla guard E2E testi (AE5), yedek mod rozeti, profil değişmezliği, `JUSTIFY.dlg` için Esc/arka plan davranışı, tablet görünümü.
+**Otomatik testi olmayanlar:** sızdıran model yanıtıyla guard E2E testi (AE5), profil değişmezliği, `JUSTIFY.dlg` için Esc/arka plan davranışı, tablet görünümü.
 
 ## Tutor değerlendirmesi
 
@@ -141,3 +176,11 @@ docs/design/               Stitch ve uygulama ekran görüntüleri
 docs/demo/                 60 sn demo videosu ve yeniden üretim talimatı
 public/assets/aistudio/    AI Studio'ya yüklenen spec (v2.1) ve Stitch tasarım sistemi dışa aktarımı
 ```
+
+## Yapay zekâ araçlarının kullanımı
+
+- **Claude Code:** spec taslağı, kod, Cypress testleri, `train.py`, parite betikleri, belgeler ve demo kayıt betikleri ajan tarafından yazıldı. Hedefi (körü körüne onay riski) ajan önerdi, ben onayladım.
+- **Google AI Studio (Gemini):** uygulamanın ilk iskeleti ve yayını; canlı tutor için model adı, yeniden deneme ve rozet düzeltmeleri.
+- **Google Stitch:** arayüz taslağı ve tasarım sistemi.
+- **Benim yaptıklarım:** ödev kararları ve teslim sırası; 15 veri oturumunu oynamak; canlı tutoru AI Studio'da çalıştırıp D1–D3 için denemek; tutor düğmesi çakışması gibi sorunları fark edip düzelttirmek; senaryonun fazla bariz olduğu gözlemi.
+- Ajan çıktısında yakalanan hatalar: ipucu merdiveninin cevabı sızdırması, sabit saat, recall kapısında duran ilk model.

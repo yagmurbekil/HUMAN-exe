@@ -1,0 +1,34 @@
+{
+  "satir": 225,
+  "gercek_satir": 45,
+  "sentetik_satir": 180,
+  "gercek_oturum": 15,
+  "egitim_satiri": 157,
+  "test_satiri": 68,
+  "metrikler": {
+    "roc_auc": 0.733,
+    "recall_riskli": 0.7619,
+    "dengeli_dogruluk": 0.6788,
+    "oturum_bazli_cv_auc": 0.7791,
+    "yalniz_gercek_cv_auc": 0.7976,
+    "gercek_test_satiri": 16,
+    "gercek_test_auc": 0.5083
+  },
+  "kurallar": {
+    "gercek_oturum >= 15": true,
+    "roc_auc >= 0.7": true,
+    "recall_riskli >= 0.6": true,
+    "dengeli_dogruluk > 0.5": true
+  },
+  "katsayilar_olcekli": {
+    "seviye": 0.3326,
+    "karar_no": 0.169,
+    "karar_suresi_sn": -0.2998,
+    "kart_orani": -1.0909,
+    "tutor_acildi": -0.5854,
+    "ipucu_sayisi": -0.4067,
+    "secim_degisikligi": 0.3373,
+    "onceki_riskli": 0.1299,
+    "onceki_uyumsuz": 0.2747
+  }
+}

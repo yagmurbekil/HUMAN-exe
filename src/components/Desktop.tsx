@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   DecisionId,
   DecisionOption,
+  EvidenceCard,
   Flag,
   Justification,
   SimState,
@@ -18,6 +19,8 @@ import { TutorWindow } from './TutorWindow';
 import { ConfirmRestartDialog } from './ConfirmRestartDialog';
 import { getClockAfterDecision } from '../utils/rules';
 import { DataCollectionPanel } from './DataCollectionPanel';
+import { DogrulaDialog } from './DogrulaDialog';
+import { isModelEnabled, loadRiskModel, predictRiskSafely } from '../utils/riskModel';
 import {
   DecisionBehaviour,
   Features,
@@ -72,6 +75,11 @@ export const Desktop: React.FC = () => {
   // State (not a ref) so the data panel re-reads the store after this session is appended
   const [sessionSaved, setSessionSaved] = useState<boolean>(false);
 
+  // Blind-acceptance model (spec.md §12.2)
+  const modelActive = !collectMode && isModelEnabled();
+  const [isScoring, setIsScoring] = useState<boolean>(false);
+  const [dogrula, setDogrula] = useState<{ probability: number; unviewedCards: EvidenceCard[] } | null>(null);
+
   // Active decision data
   const currentDecision = DECISIONS[activeDecisionId];
 
@@ -82,24 +90,51 @@ export const Desktop: React.FC = () => {
     setCurrentClock('08:00');
   };
 
-  const handleConfirmDecision = (option: DecisionOption, behaviour: DecisionBehaviour) => {
-    const prior = Object.values(records);
-    setPendingFeatures(
-      buildFeatures({
-        level: profile.level,
-        decision: currentDecision,
-        behaviour,
-        tutorOpened: tutorOpenedFor[activeDecisionId],
-        hintsUsed: hintStepsUsed[activeDecisionId] || 0,
-        priorRisky: prior.filter((r) => r.flagIncurred).length,
-        priorMisaligned: prior.filter((r) => !r.isJustificationAligned).length,
-      })
-    );
-    setPendingOption(option);
-    // Transition to justification modal
+  const openJustify = () => {
+    setDogrula(null);
     if (activeDecisionId === 'D1') setState('D1_JUSTIFY');
     else if (activeDecisionId === 'D2') setState('D2_JUSTIFY');
     else if (activeDecisionId === 'D3') setState('D3_JUSTIFY');
+  };
+
+  const handleConfirmDecision = async (option: DecisionOption, behaviour: DecisionBehaviour) => {
+    if (isScoring) return;
+    const prior = Object.values(records);
+    const features = buildFeatures({
+      level: profile.level,
+      decision: currentDecision,
+      behaviour,
+      tutorOpened: tutorOpenedFor[activeDecisionId],
+      hintsUsed: hintStepsUsed[activeDecisionId] || 0,
+      priorRisky: prior.filter((r) => r.flagIncurred).length,
+      priorMisaligned: prior.filter((r) => !r.isJustificationAligned).length,
+    });
+    setPendingFeatures(features);
+    setPendingOption(option);
+
+    // The model only decides whether DOGRULA.dlg opens. It is off while collecting training data,
+    // otherwise it would influence its own labels (spec.md §12.2).
+    if (modelActive) {
+      setIsScoring(true);
+      const prediction = await predictRiskSafely(features);
+      setIsScoring(false);
+      if (prediction && prediction.p >= prediction.threshold) {
+        const viewed = new Set(behaviour.viewedCardIds);
+        setDogrula({
+          probability: prediction.p,
+          unviewedCards: currentDecision.evidenceCards.filter((card) => !viewed.has(card.id)),
+        });
+        return;
+      }
+    }
+    openJustify();
+  };
+
+  // "Kararımı gözden geçir": back to the still-mounted decision window, selection preserved
+  const handleReviewDecision = () => {
+    setDogrula(null);
+    setPendingOption(null);
+    setPendingFeatures(null);
   };
 
   const handleConfirmJustification = (justification: Justification) => {
@@ -183,7 +218,13 @@ export const Desktop: React.FC = () => {
     setPendingFeatures(null);
     setTutorOpenedFor({ D1: false, D2: false, D3: false });
     setSessionSaved(false);
+    setDogrula(null);
   };
+
+  // Download the model before the first decision so scoring does not delay the confirm click
+  useEffect(() => {
+    if (modelActive) loadRiskModel().catch((error) => console.warn('Risk model unavailable:', error));
+  }, [modelActive]);
 
   // A tutor opened while the decision is still open counts as "tutor_acildi" for that decision
   useEffect(() => {
@@ -326,6 +367,16 @@ export const Desktop: React.FC = () => {
           <DataCollectionPanel sessionSaved={sessionSaved} />
         )}
       </div>
+
+      {/* DOGRULA.dlg: opened by the model before justification */}
+      {dogrula && (
+        <DogrulaDialog
+          probability={dogrula.probability}
+          unviewedCards={dogrula.unviewedCards}
+          onReview={handleReviewDecision}
+          onProceed={openJustify}
+        />
+      )}
 
       {/* JUSTIFY.dlg Modal Dialog (Active on confirm) */}
       {isJustifyModalOpen && pendingOption && (

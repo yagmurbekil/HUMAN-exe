@@ -25,6 +25,11 @@ Satırlar, uygulamanın veri toplama modunda (`?veri=1`) tarayıcıda üretilir:
 
 Girdi sırası (`model/config.json` → `features`): `seviye, karar_no, karar_suresi_sn, kart_orani, tutor_acildi, ipucu_sayisi, secim_degisikligi, onceki_riskli, onceki_uyumsuz`.
 
+## Veri kaynağı ve sınırları
+
+- **`kaynak=gercek` (45 satır, 15 oturum):** Uygulamanın veri toplama modunda üretildi. **Tek kişi (geliştirici) tarafından, hızlı ve rastgele cevaplarla oynandı.** Bu satırlar 3 farklı oyuncudan gelmez ve gerçek kullanıcı davranışını temsil etmez. Neredeyse hiç kart açılmadığı için `kart_orani` kararda sabit kalır, `ipucu_sayisi` her satırda 0'dır.
+- **`kaynak=sentetik` (180 satır, 60 oturum):** `scripts/veri_uret.py` ile üretildi, tohum 20261106. Üretici kuralı betiğin başında yazılıdır. Kural bir varsayımdır: "kanıt inceleyen ve zaman ayıran oyuncu daha az riskli seçer".
+
 ## Bilinçli olarak toplanmayanlar (KVKK)
 
 Ad, e-posta, cihaz kimliği, IP adresi, konum, tarayıcı bilgisi ve zaman damgası **toplanmaz**. Rol ve öğrenme hedefi de modele girmez; amaç kişiyi değil, karar anındaki davranışı modellemektir. Veri, oyuncunun kendi tarayıcısında (`localStorage`) tutulur, hiçbir sunucuya gönderilmez ve yalnızca oyuncunun indirdiği CSV dosyasıyla aktarılır.

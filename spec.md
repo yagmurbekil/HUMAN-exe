@@ -210,8 +210,15 @@ Kurallardan biri sağlanmazsa `train.py` sıfırdan farklı çıkış koduyla du
 
 | Kod | Given / When / Then | Otomatik test |
 |---|---|---|
-| **AE8** Model davranışı değiştirir | *Given* model yüklü ve veri toplama modu kapalı, *when* oyuncu tek kanıt kartını açıp 5 sn içinde onaylar ve `p_kor_onay ≥ karar_esigi` olur, *then* `JUSTIFY.dlg`'den önce `DOGRULA.dlg` açılır ve incelenmemiş kartları listeler; *when* aynı karar tüm kartlar incelenip tutor kullanılarak verilir ve `p_kor_onay < karar_esigi` olur, *then* doğrudan `JUSTIFY.dlg` açılır. | Cypress (planlandı) |
-| **AE9** Parite (diferansiyel test) | *Given* `tests/parite.json` içindeki 5 referans girdi ve Python test kahininin (`tests/parite.py`) olasılıkları, *when* aynı girdiler uygulamadaki `onnxruntime-web` çıkarımına verilir, *then* her girdide `|p_uygulama − p_python| < 1e-4` olur. | Cypress `data-cy="p"` (planlandı) |
-| **AE10** Eval kapısı | *Given* test kümesinde ROC-AUC < 0.70 veya gerçek oturum sayısı < 15, *when* `python train.py` çalıştırılır, *then* betik sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` oluşturulmaz. | `train.py` (planlandı) |
+| **AE8** Model davranışı değiştirir | *Given* model yüklü ve veri toplama modu kapalı, *when* oyuncu tek kanıt kartını açıp 5 sn içinde onaylar ve `p_kor_onay ≥ karar_esigi` olur, *then* `JUSTIFY.dlg`'den önce `DOGRULA.dlg` açılır ve incelenmemiş kartları listeler; *when* aynı karar tüm kartlar incelenip tutor kullanılarak verilir ve `p_kor_onay < karar_esigi` olur, *then* doğrudan `JUSTIFY.dlg` açılır. | `cypress/e2e/model.cy.ts` |
+| **AE9** Parite (diferansiyel test) | *Given* `tests/parite.json` içindeki 5 referans girdi ve Python test kahininin (`tests/parite.py`) olasılıkları, *when* aynı girdiler uygulamadaki `onnxruntime-web` çıkarımına verilir, *then* her girdide `|p_uygulama − p_python| < 1e-4` olur. | `cypress/e2e/model.cy.ts` (tarayıcı ve `/api/risk`), `tests/parite.py` |
+| **AE10** Eval kapısı | *Given* test kümesinde ROC-AUC < 0.70 veya gerçek oturum sayısı < 15, *when* `python train.py` çalıştırılır, *then* betik sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` oluşturulmaz. | `tests/eval_kapisi.py` |
 
-**Regresyon:** v2.2'nin 39 Cypress testi model devreye girdikten sonra da değişmeden geçmelidir. Bu testlerde model kapalıdır ya da müdahalesi testi etkilemeyecek şekilde ayarlanır.
+**Regresyon:** v2.2'nin 39 Cypress testi model devreye girdikten sonra da geçmelidir. 8 yol testi (`paths.cy.ts`) model açıkken çalışır; `DOGRULA.dlg` açılırsa oyuncu kararını korur. Sabit tıklama dizileri kullanan diğer testlerde model kapalıdır (`cypress/support/e2e.ts`).
+
+### 12.6 Uygulama sonucu ve plandan sapmalar
+
+- **Gerçek veri hedefi kısmen karşılandı.** 15 oturum (45 satır) toplandı, ancak **hepsini tek kişi (geliştirici) rastgele cevaplarla oynadı**; §12.3'teki "en az 3 farklı oyuncu" şartı karşılanmadı. Satırlar uygulamadan geldiği için `kaynak=gercek` olarak kaldı, ama gerçek kullanıcı davranışını temsil etmez.
+- **Sentetik veri eklendi:** 60 oturum, 180 satır (`scripts/veri_uret.py`, tohum 20261106). Gerçek satırlarda `kart_orani` hiç değişmediği için model, kanıt inceleme davranışını bu satırlardan öğrenemezdi.
+- **Eval kapısı ilk denemede durdu** (recall 0.5238 < 0.60). Eşik değiştirilmedi; sınıf dengesizliği için `class_weight="balanced"` eklendi. Ayrıntı: [`RELEASE.md`](RELEASE.md).
+- **Geçerleme zayıftır.** Karışık test ROC-AUC 0.7330; gerçek test satırlarında (16 satır) 0.5083. Parite, modelin her ortamda aynı hesaplandığını gösterir (doğrulama); gerçek oyuncu davranışını öğrendiğini göstermez (geçerleme).

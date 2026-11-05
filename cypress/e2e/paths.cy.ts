@@ -4,7 +4,8 @@ import paths from '../fixtures/paths.json';
 describe('HUMAN.exe — All 8 Decision Paths (2 × 2 × 2 Matrix)', () => {
   beforeEach(() => {
     cy.stubTutorApi();
-    cy.visit('/');
+    // Regression with the model switched on: DOGRULA.dlg may appear but must not change any path
+    cy.visit('/?model=1');
   });
 
   // The 8 paths come from the shared fixture also used by rules.cy.ts (AC-14)

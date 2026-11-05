@@ -14,6 +14,8 @@ import { GoogleGenAI } from '@google/genai';
 import { DECISIONS } from './src/data/scenarioData.ts';
 import { DecisionId, UserProfile } from './src/types/index.ts';
 import { checkForbiddenGuard } from './src/utils/tutorLogic.ts';
+import { FEATURE_ORDER } from './src/utils/telemetry.ts';
+import { readFile } from 'fs/promises';
 
 dotenv.config();
 
@@ -43,6 +45,49 @@ app.get('/api/health', (_req: Request, res: Response) => {
     hasKey,
     model: 'gemini-3.5-flash-lite',
   });
+});
+
+// Server-side consumer of the same model.onnx (spec.md AE9). The game itself scores in the browser;
+// this endpoint exists for the three-way parity test: Python oracle, browser and server.
+let riskModel: Promise<{ run: (input: Float32Array) => Promise<number>; config: any }> | null = null;
+
+function getRiskModel() {
+  if (!riskModel) {
+    riskModel = (async () => {
+      const ort = await import('onnxruntime-web');
+      ort.env.wasm.numThreads = 1;
+      const [config, bytes] = await Promise.all([
+        readFile(path.resolve(__dirname, 'model/config.json'), 'utf-8').then(JSON.parse),
+        readFile(path.resolve(__dirname, 'model/model.onnx')),
+      ]);
+      const session = await ort.InferenceSession.create(new Uint8Array(bytes), { executionProviders: ['wasm'] });
+      const run = async (input: Float32Array) => {
+        const tensor = new ort.Tensor('float32', input, [1, input.length]);
+        const output = await session.run({ [config.input_name]: tensor });
+        return Number(output[config.output_name].data[config.positive_class_index]);
+      };
+      return { run, config };
+    })().catch((error) => {
+      riskModel = null;
+      throw error;
+    });
+  }
+  return riskModel;
+}
+
+app.post('/api/risk', async (req: Request, res: Response) => {
+  const girdi = req.body?.girdi ?? {};
+  const values = FEATURE_ORDER.map((name) => Number(girdi[name]));
+  if (values.some((value) => !Number.isFinite(value))) {
+    return res.status(400).json({ error: `Beklenen girdiler: ${FEATURE_ORDER.join(', ')}` });
+  }
+  try {
+    const { run, config } = await getRiskModel();
+    res.json({ p: await run(Float32Array.from(values)), surum: config.version, esik: config.karar_esigi });
+  } catch (error: any) {
+    console.error('Risk model error:', error?.message || error);
+    res.status(503).json({ error: 'Model yüklenemedi.' });
+  }
 });
 
 // Helper: Call Gemini with controlled 503 retries (max 2), no retries on 403/429

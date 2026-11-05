@@ -1,0 +1,7 @@
+# HUMAN.exe model pipeline. Python 3.13.
+scikit-learn==1.9.1
+pandas==3.1.1
+skl2onnx==1.20.0
+onnx==1.23.2
+onnxruntime==1.31.1
+huggingface_hub==2.4.0
