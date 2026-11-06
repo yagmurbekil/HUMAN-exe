@@ -49,7 +49,9 @@ describe('HUMAN.exe — Data collection mode (spec.md §12.3)', () => {
       rows.forEach((r: any) => expect(Object.keys(r).sort()).to.deep.equal([...CSV_COLUMNS].sort()));
 
       const [d1, d2, d3] = rows;
-      expect(d1).to.include({ karar_id: 'D1', karar_no: 1, seviye: 2, riskli_secim: 1, kaynak: 'gercek' });
+      expect(d1).to.include({
+        karar_id: 'D1', karar_no: 1, seviye: 2, riskli_secim: 1, kaynak: 'gercek', uretim_turu: 'oyun-oturumu',
+      });
       expect(d1.kart_orani).to.equal(0.75); // 3 of 4 cards
       expect(d1.secim_degisikligi).to.equal(1);
       expect(d1.tutor_acildi).to.equal(0);

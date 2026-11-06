@@ -19,15 +19,15 @@ ROOT = Path(__file__).resolve().parent.parent
 TOLERANCE = 1e-4
 CASES = [
     ("hizli_ilk_karar", dict(seviye=0, karar_no=1, karar_suresi_sn=3, kart_orani=0.25, tutor_acildi=0,
-                             ipucu_sayisi=0, secim_degisikligi=0, onceki_riskli=0, onceki_uyumsuz=0)),
+                             ipucu_sayisi=0, onceki_riskli=0, onceki_uyumsuz=0)),
     ("dikkatli_ilk_karar", dict(seviye=0, karar_no=1, karar_suresi_sn=60, kart_orani=1, tutor_acildi=1,
-                                ipucu_sayisi=2, secim_degisikligi=1, onceki_riskli=0, onceki_uyumsuz=0)),
+                                ipucu_sayisi=2, onceki_riskli=0, onceki_uyumsuz=0)),
     ("riskli_gecmis_d2", dict(seviye=1, karar_no=2, karar_suresi_sn=2.5, kart_orani=0.25, tutor_acildi=0,
-                              ipucu_sayisi=0, secim_degisikligi=0, onceki_riskli=1, onceki_uyumsuz=1)),
+                              ipucu_sayisi=0, onceki_riskli=1, onceki_uyumsuz=1)),
     ("kismi_inceleme_d2", dict(seviye=2, karar_no=2, karar_suresi_sn=21.4, kart_orani=0.5, tutor_acildi=0,
-                               ipucu_sayisi=0, secim_degisikligi=1, onceki_riskli=0, onceki_uyumsuz=0)),
+                               ipucu_sayisi=0, onceki_riskli=0, onceki_uyumsuz=0)),
     ("riskli_gecmis_d3", dict(seviye=0, karar_no=3, karar_suresi_sn=7.7, kart_orani=0.667, tutor_acildi=1,
-                              ipucu_sayisi=1, secim_degisikligi=0, onceki_riskli=2, onceki_uyumsuz=2)),
+                              ipucu_sayisi=1, onceki_riskli=2, onceki_uyumsuz=2)),
 ]
 
 

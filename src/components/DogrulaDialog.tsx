@@ -56,9 +56,9 @@ export const DogrulaDialog: React.FC<DogrulaDialogProps> = ({
           )}
 
           <p className="text-[#464653] text-[10px]">
-            Davranış modeli (MODEL.exe) körü körüne onay riskini{' '}
-            <strong data-cy="p">{probability.toFixed(8)}</strong> olarak hesapladı. Bu değer seçimine değil,
-            karar verme biçimine bakar; hangi seçeneğin doğru olduğunu söylemez.
+            Sentetik veriyle eğitilmiş prototip model (MODEL.exe), davranışına bakarak riskli seçim
+            olasılığını <strong data-cy="p" data-p={probability}>%{Math.round(probability * 100)}</strong>{' '}
+            olarak tahmin etti. Bu değer seçimini görmez ve hangi seçeneğin doğru olduğunu söylemez.
           </p>
 
           <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[#808080]">

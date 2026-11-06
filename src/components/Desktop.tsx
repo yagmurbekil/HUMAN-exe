@@ -23,7 +23,7 @@ import { DogrulaDialog } from './DogrulaDialog';
 import { isModelEnabled, loadRiskModel, predictRiskSafely } from '../utils/riskModel';
 import {
   DecisionBehaviour,
-  Features,
+  RecordedFeatures,
   SessionRow,
   appendStoredRows,
   buildFeatures,
@@ -66,7 +66,7 @@ export const Desktop: React.FC = () => {
   const [collectMode, setCollectMode] = useState<boolean>(() => isDataCollectionMode());
   const sessionIdRef = useRef<string>(newSessionId());
   const [sessionRows, setSessionRows] = useState<SessionRow[]>([]);
-  const [pendingFeatures, setPendingFeatures] = useState<Features | null>(null);
+  const [pendingFeatures, setPendingFeatures] = useState<RecordedFeatures | null>(null);
   const [tutorOpenedFor, setTutorOpenedFor] = useState<Record<DecisionId, boolean>>({
     D1: false,
     D2: false,
@@ -75,7 +75,7 @@ export const Desktop: React.FC = () => {
   // State (not a ref) so the data panel re-reads the store after this session is appended
   const [sessionSaved, setSessionSaved] = useState<boolean>(false);
 
-  // Blind-acceptance model (spec.md §12.2)
+  // Risky-choice model (spec.md §12.2)
   const modelActive = !collectMode && isModelEnabled();
   const [isScoring, setIsScoring] = useState<boolean>(false);
   const [dogrula, setDogrula] = useState<{ probability: number; unviewedCards: EvidenceCard[] } | null>(null);

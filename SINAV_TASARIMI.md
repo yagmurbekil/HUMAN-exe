@@ -40,4 +40,4 @@ Yayından iki hafta sonra hemşireler, yaşlı hastaların sistematik olarak dü
 
 ## Neden bu soru?
 
-HUMAN.exe'yi geliştirirken aynı tuzakla karşılaştım: Python, tarayıcı ve sunucu 1e-4 toleransla birebir uyuştu, ama bu modelin gerçek oyuncu davranışını öğrendiğini kanıtlamadı. Gerçek satırlardaki test AUC'si 0.51 çıktı. Parite doğrulamaydı, geçerleme değildi.
+HUMAN.exe'yi geliştirirken aynı tuzakla karşılaştım: Python, tarayıcı ve sunucu 1e-4 toleransla birebir uyuştu, testler geçti, ama veri tamamen sentetikti ve model yalnızca üretici varsayımı geri buluyordu. Üstelik satır bazlı bölme sızıntı yapıyordu. Parite doğrulamaydı, geçerleme değildi.

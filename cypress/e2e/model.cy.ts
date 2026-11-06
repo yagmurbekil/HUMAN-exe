@@ -3,7 +3,7 @@ import parite from '../../tests/parite.json';
 
 const TOLERANCE = parite.tolerans;
 
-describe('HUMAN.exe — Blind-acceptance model (spec.md §12)', () => {
+describe('HUMAN.exe — Risky-choice prototype model (spec.md §12)', () => {
   describe('AE9: differential test against the Python oracle', () => {
     parite.vakalar.forEach((vaka) => {
       it(`browser matches Python for ${vaka.ad}`, () => {
@@ -47,7 +47,8 @@ describe('HUMAN.exe — Blind-acceptance model (spec.md §12)', () => {
       cy.get('[data-cy="dogrula-dlg"]', { timeout: 20000 }).should('be.visible');
       cy.get('[data-cy="justify-dlg"]').should('not.exist');
       cy.get('[data-cy="dogrula-kartlar"] li').should('have.length', 3);
-      cy.get('[data-cy="p"]').invoke('text').then((p) => expect(Number(p)).to.be.at.least(0.5));
+      cy.get('[data-cy="p"]').invoke('attr', 'data-p').then((p) => expect(Number(p)).to.be.at.least(0.5));
+      cy.get('[data-cy="dogrula-dlg"]').should('contain.text', 'Sentetik veriyle eğitilmiş prototip');
 
       cy.get('[data-cy="dogrula-gozden-gecir"]').click();
       cy.get('[data-cy="dogrula-dlg"]').should('not.exist');

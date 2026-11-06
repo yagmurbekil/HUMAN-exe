@@ -1,52 +1,71 @@
 ---
 license: mit
 library_name: onnx
-tags: [tabular-classification, sklearn, education]
+tags: [tabular-classification, sklearn, education, synthetic-data]
 ---
 
-# human-exe-blind-accept-onnx (v2.0.0)
+# human-exe-risky-choice-onnx (v2.0.0-prototip)
+
+> **Sentetik veriyle eğitilmiş teknik prototip.** Gerçek oyuncu verisi yoktur (0 gerçek oturum).
+> Ödevin en az 15 gerçek oturum şartı **karşılanmamıştır**. Aşağıdaki metrikler gerçek oyuncu
+> performansı değildir.
 
 ## Amaç
-HUMAN.exe oyununda oyuncu `Kararı Onayla`ya bastığında, davranışına bakarak seçiminin riskli olma
-olasılığını (`p_kor_onay`) tahmin eder. `p >= 0.5` ise oyun `DOGRULA.dlg` penceresini açar.
-Seçilen seçenek modele girdi değildir. Eğitim amaçlıdır.
+HUMAN.exe oyununda oyuncu `Kararı Onayla`ya bastığında, davranış özelliklerinden seçilen seçeneğin
+**riskli (bayraklı) seçenek olma olasılığını** (`p_riskli_secim`) tahmin eder. `p >= 0.5` ise
+oyun `DOGRULA.dlg` penceresini açar. Seçilen seçenek girdi değildir.
+
+Model "körü körüne onay" ölçmez: D3'te riskli seçenek ASSIST.exe önerisine karşı çıkmaktır ve
+oyuncunun niyeti ya da kanıtı okuyup okumadığı etikette yer almaz.
 
 ## Model
-`StandardScaler` + `LogisticRegression` (scikit-learn 1.9.1, `random_state=42`) → ONNX.
-Girdi: `input`, float32, `[N, 9]`. Çıktı: `probabilities`, `[N, 2]`, indeks 1 riskli sınıftır.
-Özellik sırası `config.json` içindedir; tanımlar: `data/SOZLUK.md`.
+`StandardScaler` + `LogisticRegression` (`class_weight="balanced"`, scikit-learn 1.9.1,
+`random_state=42`) → ONNX. Girdi: `input`, float32, `[N, 8]`. Çıktı: `probabilities`,
+`[N, 2]`, indeks 1 riskli sınıftır. Özellik sırası `config.json` içindedir; tanımlar: `data/SOZLUK.md`.
+
+`class_weight` olasılıkları kalibre etmez; `p` gerçek bir sıklık olarak yorumlanmamalıdır.
+
+**Çıkarılan girdi:** `secim_degisikligi`, oturum bazlı sonuç görülmeden önce çıkarıldı. Önceki modelde
+fikir değiştirmek riski yükseltiyordu; bu, `DOGRULA.dlg` sonrası kararını gerçekten gözden geçiren
+oyuncuyu cezalandırırdı ve üretici kuralda böyle bir etki yoktu. Sütun CSV'de durur, modele girmez.
 
 ## Veri
-- 45 satır / 15 oturum `kaynak=gercek`, 180 satır / 60 oturum `kaynak=sentetik`.
-- **Gerçek satırların sınırı:** 15 oturumun tamamı tek kişi (geliştirici) tarafından, hızlı ve
-  rastgele cevaplarla oynandı; 3 farklı oyuncu hedefi karşılanmadı. Bu satırlar gerçek kullanıcı
-  davranışını temsil etmez. Neredeyse hiç kanıt kartı açılmadığı için `kart_orani` bu satırlarda
-  değişmez, `ipucu_sayisi` hep 0'dır.
-- **Sentetik satırlar** `scripts/veri_uret.py` (tohum 20261106) ile bir varsayımdan üretildi:
-  "kanıt inceleyen ve zaman ayıran oyuncu daha az riskli seçer". Model bu varsayımı öğrenir.
+Tümü `kaynak=sentetik`, 225 satır / 75 oturum:
+- `uretim_turu=manuel-rastgele`: 45 satır / 15 oturum. Elle ve rastgele
+  cevaplarla oluşturuldu. Oyuncu davranışı değildir.
+- `uretim_turu=algoritmik-sentetik`: 180 satır / 60 oturum. `scripts/veri_uret.py`
+  (tohum 20261106) ile şu varsayımdan üretildi: "kanıt inceleyen ve zaman ayıran oyuncu daha az
+  riskli seçer". Model bu varsayımı geri bulur; varsayımın doğruluğunu kanıtlamaz.
 
-## Metrikler (kabul: ROC-AUC >= 0.7, recall >= 0.6, dengeli doğruluk > 0.5)
+## Metrikler
+Oturum bazlı %70 / %30 bölme (`GroupShuffleSplit`, tohum 42), eğitim ile test arasında ortak oturum
+sayısı 0. Eşikler: ROC-AUC >= 0.7, recall >= 0.6, dengeli doğruluk > 0.5.
+
 | Ölçüm | Değer |
 |---|---|
-| Test kümesi (%30, gerçek + sentetik) ROC-AUC | 0.733 |
-| Test kümesi recall (riskli) | 0.7619 |
-| Test kümesi dengeli doğruluk | 0.6788 |
-| Oturum bazlı 5 katlı CV ROC-AUC (tüm veri) | 0.7791 |
-| Yalnız gerçek satırlarla eğitilen modelin oturum bazlı CV ROC-AUC'si | 0.7976 |
-| Test kümesindeki gerçek satırlar (16 satır) ROC-AUC | 0.5083 |
-| ONNX ↔ sklearn en büyük fark | 6.77e-08 |
+| Test ROC-AUC (23 oturum, 69 satır) | 0.7898 |
+| Test ROC-AUC %95 aralığı (oturum bootstrap) | [0.6349, 0.9097] |
+| Test recall (riskli) | 0.85 |
+| Test dengeli doğruluk | 0.7311 |
+| Oturum bazlı 5 katlı CV ROC-AUC | 0.7751 |
+| Test, algoritmik alt küme ROC-AUC | 0.877 |
+| Test, manuel alt küme ROC-AUC | 0.7259 |
+| ONNX ↔ sklearn en büyük fark | 5.94e-08 |
 
-Karışık test skoru büyük ölçüde sentetik kuralın geri bulunmasını gösterir; gerçek oyuncu üzerinde
-geçerlilik kanıtı değildir. Gerçek satır sayısı küçük olduğundan o satırlardaki skorlar güvenilir değildir.
+Bu skorlar yalnızca üretici kuralın ne ölçüde geri bulunduğunu gösterir. Gerçek oyuncu üzerinde
+geçerlilik kanıtı değildir. Eşik bu verinin bir bölümü daha önce görüldükten sonra korunmuştur;
+`class_weight` kararı önceki satır bazlı denemeden gelir, bu nedenle skor iyimser olabilir.
 
 ## Sınırlar
-- Tek senaryo, üç karar için üretilmiştir; başka oyuna veya senaryoya taşınamaz.
-- Satırlar bağımsız değildir: aynı oturumun kararları birbirini etkiler.
+- Gerçek veri şartı karşılanmadı; üretim kullanımı için uygun değildir.
+- Manuel satırlar hızlı (medyan 2,9 sn), algoritmik satırlar yavaştır (medyan yaklaşık 32 sn); süre
+  üretim türünü de ele verir. Model çok hızlı oyuncu için bir tahminde bulunurken bu kaymadan etkilenir.
+- Tek senaryo, üç karar için üretilmiştir; başka oyuna taşınamaz.
 - Süre, sekmeden ayrılmayı ayırt edemez; kart açmak okumak anlamına gelmez.
 
 ## Kullanılmaması gereken durumlar
 Kişi, öğrenci veya çalışan değerlendirmesi; not verme; işe alım; gerçek olay yönetimi ya da klinik
-kararlar. Çıktı oyuncunun yetkinliğini ölçmez, yalnızca oyundaki bir uyarının açılmasını tetikler.
+kararlar. Çıktı yetkinlik ölçmez, yalnızca oyundaki bir uyarıyı tetikler.
 
 ## Sürüm
 Yayın, sabitlenmiş commit ve geri dönüş: GitHub deposundaki `RELEASE.md`.

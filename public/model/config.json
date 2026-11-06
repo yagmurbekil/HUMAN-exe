@@ -1,6 +1,9 @@
 {
-  "model": "human-exe-blind-accept",
-  "version": "2.0.0",
+  "model": "human-exe-risky-choice",
+  "version": "2.0.0-prototip",
+  "durum": "sentetik-prototip",
+  "gercek_veri_kapisi": false,
+  "gercek_oturum": 0,
   "task": "binary-classification",
   "input_name": "input",
   "output_name": "probabilities",
@@ -12,7 +15,6 @@
     "kart_orani",
     "tutor_acildi",
     "ipucu_sayisi",
-    "secim_degisikligi",
     "onceki_riskli",
     "onceki_uyumsuz"
   ],
@@ -23,26 +25,34 @@
   "karar_esigi": 0.5,
   "seed": 42,
   "metrics": {
-    "roc_auc": 0.733,
-    "recall_riskli": 0.7619,
-    "dengeli_dogruluk": 0.6788,
-    "oturum_bazli_cv_auc": 0.7791,
-    "yalniz_gercek_cv_auc": 0.7976,
-    "gercek_test_satiri": 16,
-    "gercek_test_auc": 0.5083
+    "roc_auc": 0.7898,
+    "recall_riskli": 0.85,
+    "dengeli_dogruluk": 0.7311,
+    "roc_auc_guven_95": [
+      0.6349,
+      0.9097
+    ],
+    "oturum_bazli_cv_auc": 0.7751
   },
   "acceptance": {
-    "gercek_oturum >= 15": true,
     "roc_auc >= 0.7": true,
     "recall_riskli >= 0.6": true,
-    "dengeli_dogruluk > 0.5": true
+    "dengeli_dogruluk > 0.5": true,
+    "oturum_kesisimi == 0": true
   },
-  "onnx_sklearn_max_fark": 6.774045446800159e-08,
+  "onnx_sklearn_max_fark": 5.943062675317634e-08,
   "data": {
     "satir": 225,
-    "gercek_satir": 45,
-    "sentetik_satir": 180,
-    "gercek_oturum": 15
+    "uretim_turu": {
+      "algoritmik-sentetik": {
+        "satir": 180,
+        "oturum": 60
+      },
+      "manuel-rastgele": {
+        "satir": 45,
+        "oturum": 15
+      }
+    }
   },
   "sklearn_version": "1.9.1"
 }

@@ -1,5 +1,5 @@
 /**
- * HUMAN.exe v3 demo: the same D1 scene with two players and two model decisions (Ödev 7, 60–90 s).
+ * HUMAN.exe v3 demo: the same D1 scene with two scripted players and two model decisions (Ödev 7, 60–90 s).
  *
  * Same capture pipeline as scripts/record-demo.ts (CDP screencast at 780×1688, H.264, no audio).
  * Prerequisite: `npm run dev` is running on http://localhost:3000.
@@ -93,9 +93,9 @@ async function main() {
   });
 
   // Player A
-  await caption(page, 'HUMAN.exe v3: model oyuncunun davranışını okur');
+  await caption(page, 'Prototip model (yalnızca sentetik veri)');
   await pause(page, 3500);
-  await caption(page, 'OYUNCU A: aynı profil, acele ediyor');
+  await caption(page, 'BETİKLİ OYUNCU A: acele ediyor');
   await onboard(page);
   await caption(page, 'A — D1: tek kart, 3 sn, tutor yok');
   await pause(page, 2500);
@@ -122,7 +122,7 @@ async function main() {
   await page.click('[data-cy="restart-confirm-yes"]');
   await page.waitForSelector('[data-cy="onboarding-window"]');
   await top(page);
-  await caption(page, 'OYUNCU B: aynı profil, aynı sahne, dikkatli');
+  await caption(page, 'BETİKLİ OYUNCU B: aynı sahne, dikkatli');
   await pause(page, 2000);
   await onboard(page);
   await caption(page, 'B — D1: tüm kanıt kartlarını inceliyor');

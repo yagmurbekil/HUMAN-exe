@@ -17,35 +17,39 @@ Kurgusal bir hastane randevu sistemi olayında, yapay zekâ asistanının (ASSIS
 
 ---
 
-## Ödev 7 — The Primer v2: küçük model
+## Ödev 7 — The Primer v2: küçük model (sentetik prototip)
 
-Oyuncu `Kararı Onayla`ya bastığında küçük bir lojistik regresyon, davranışına bakarak **körü körüne onay riskini** (`p_kor_onay`) hesaplar. `p >= 0.5` ise `DOGRULA.dlg` açılır: incelenmemiş kanıt kartlarını listeler ve kararı gözden geçirmeyi önerir. Seçilen seçenek girdi değildir; model yalnızca davranışa bakar ve cevabı söylemez. Aynı sahnede acele eden oyuncu uyarı alır (p≈0.66), kartları inceleyip tutor kullanan oyuncu almaz (p≈0.01).
+> **Gerçek veri şartı karşılanmadı.** Projede 0 gerçek oyuncu oturumu vardır. Model yalnızca sentetik veriyle eğitilmiş bir **teknik prototiptir**; metrikleri gerçek oyuncu performansı değildir.
+
+Oyuncu `Kararı Onayla`ya bastığında küçük bir lojistik regresyon, davranış özelliklerinden seçilen seçeneğin **riskli olma olasılığını** (`p_riskli_secim`) tahmin eder. `p >= 0.5` ise `DOGRULA.dlg` açılır ve incelenmemiş kanıt kartlarını listeler. Seçilen seçenek girdi değildir. Aynı sahnede betikli acele oyuncu uyarı alır (p≈0.74), kartları inceleyip tutor kullanan betikli oyuncu almaz (p≈0.06).
 
 | | |
 |---|---|
-| Spec, metrik, eşik | [`spec.md` §12](spec.md) |
+| Spec, metrik, kapılar, sapmalar | [`spec.md` §12](spec.md) |
 | Veri | [`data/oturumlar.csv`](data/oturumlar.csv), [`data/SOZLUK.md`](data/SOZLUK.md) |
-| Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı), [Hugging Face](https://huggingface.co/yagmurbekil/human-exe-blind-accept-onnx) |
+| Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı, `eval_raporu.json`) |
 | Yayın, rollback, ödünleşim | [`RELEASE.md`](RELEASE.md) |
 | Parite | [`tests/parite.py`](tests/parite.py), [`tests/parite.json`](tests/parite.json) |
-| Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz) |
+| Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz, betikli oyuncular) |
 | Sınav tasarımı | [`SINAV_TASARIMI.md`](SINAV_TASARIMI.md) |
 
-**Kurulum (3 komut):**
+**Modeli yeniden üretmek (3 komut):**
 
 ```bash
 py -3.13 -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt
-.venv/Scripts/python train.py
+.venv/Scripts/python train.py --sentetik-prototip
 ```
 
-`train.py` tek komutla çalışır, sabit tohum kullanır, metrikleri `model/config.json`'a yazar ve eşik altında sıfırdan farklı kodla durur. Sentetik satırları yeniden üretmek için: `.venv/Scripts/python scripts/veri_uret.py` (tohum 20261106, 60 oturum; kural betiğin başında).
+`--sentetik-prototip` olmadan `train.py` bilerek durur: üretim modu en az 15 gerçek oturum ister. Prototip modu teknik kapıyı atlayamaz ve çıktıyı `2.0.0-prototip` olarak etiketler. Algoritmik satırları yeniden üretmek için: `.venv/Scripts/python scripts/veri_uret.py` (tohum 20261106; kural betiğin başında).
 
-**Metrikler (eşikler eğitimden önce yazıldı):** test ROC-AUC 0.7330 (≥ 0.70), recall 0.7619 (≥ 0.60), dengeli doğruluk 0.6788, oturum bazlı 5 katlı CV ROC-AUC 0.7791, ONNX↔sklearn farkı 6.8e-08. İlk deneme recall 0.5238 ile kapıda durdu ([`RELEASE.md`](RELEASE.md)).
+**Veri:** 225 satır, 75 oturum, tümü `kaynak=sentetik`: 45 satır `uretim_turu=manuel-rastgele` (elle, rastgele cevaplarla), 180 satır `uretim_turu=algoritmik-sentetik`.
 
-**Dürüstlük notu:** 15 "gerçek" oturumun tamamını geliştirici tek başına, rastgele cevaplarla oynadı; 3 farklı oyuncu hedefi karşılanmadı. Gerçek test satırlarındaki AUC 0.5083'tür (16 satır), yani model gerçek oyuncu davranışını öğrendiğini göstermiyor. Kanıt inceleme etkisi sentetik veriden gelir. Parite testi modelin üç ortamda aynı hesaplandığını kanıtlar, doğru olduğunu değil.
+**Metrikler (oturum bazlı test, 23 oturum, 69 satır, yalnız sentetik veri):** ROC-AUC 0.7898 (eşik ≥ 0.70), %95 aralık 0.63–0.91, recall 0.85 (≥ 0.60), dengeli doğruluk 0.73, oturum bazlı 5 katlı CV ROC-AUC 0.78, ONNX farkı 5.9e-08. Teknik kapı açık, **gerçek veri kapısı kapalı**.
 
-**Senaryo gözlemi:** Veri toplarken seçeneklerin fazla bariz olduğu görüldü: ASSIST.exe'nin önerisi ve "doğrula, test et, maskele" seçenekleri kanıt okumadan ayırt edilebiliyor. Bu nedenle gerçek oyuncu verisi de tek başına anlamlı bir öğrenme sinyali vermeyebilir; bir sonraki sürümde güvenli seçeneğin de maliyetli olduğu daha dengeli ikilemler gerekir.
+**Bu sonuçlar ne anlama gelir?** Model üretici varsayımını geri buluyor; gerçek oyunculara genellenemez. Güven aralığının alt ucu 0.70'in altında. Parite testi modelin üç ortamda aynı hesaplandığını kanıtlar (doğrulama), doğru olduğunu değil (geçerleme). `DOGRULA.dlg` manuel satırların %96'sında açılır; pratikte hızlı oyuncuyu uyaran bir sezgiseldir. Model "körü körüne onay" ölçmez. Ayrıntılar ve tüm sapmalar: [`spec.md` §12.6](spec.md).
+
+**Senaryo gözlemi:** Satırlar oluşturulurken seçeneklerin fazla bariz olduğu görüldü: "doğrula, test et, maskele" seçenekleri kanıt okumadan ayırt edilebiliyor. Bir sonraki sürümde güvenli seçeneğin de maliyetli olduğu daha dengeli ikilemler gerekir.
 
 ---
 
@@ -136,7 +140,7 @@ Cypress: 8 spec dosyası, 57 test (`cypress/e2e/`). LLM çağrıları `cy.interc
 | `rules.cy.ts` | 3 | Kural modülü: 8 yolun bayrak, son ve saati (`cypress/fixtures/paths.json`) |
 | `tutor.cy.ts` | 2 | İpucu merdiveni, stub'lı canlı yanıt, `JUSTIFY.dlg` açıkken tutor kilidi |
 
-**Son yerel çalıştırma (6 Kasım 2026):** `npm run lint` ✔, `npm run build` ✔, Cypress **57/57 geçti** (Electron, headless; API anahtarsız), `tests/eval_kapisi.py` 4/4, `tests/parite.py --kontrol` geçti (en büyük fark 5e-09). `paths.cy.ts` model açıkken çalışır; canlı Gemini Cypress'te stub'lanır.
+**Son yerel çalıştırma (6 Kasım 2026):** `npm run lint` ✔, `npm run build` ✔, Cypress **57/57 geçti** (Electron, headless; API anahtarsız), `tests/veri_kontrol.py` 10/10, `tests/eval_kapisi.py` 9/9, `tests/parite.py --kontrol` geçti (en büyük fark 4.5e-09). `paths.cy.ts` model açıkken çalışır; canlı Gemini Cypress'te stub'lanır.
 
 **Otomatik testi olmayanlar:** sızdıran model yanıtıyla guard E2E testi (AE5), profil değişmezliği, `JUSTIFY.dlg` için Esc/arka plan davranışı, tablet görünümü.
 
@@ -153,6 +157,7 @@ Cypress: 8 spec dosyası, 57 test (`cypress/e2e/`). LLM çağrıları `cy.interc
 ## Sınırlamalar
 
 - **Canlı tutor yalnızca elle denendi:** AI Studio'da D1–D3 için `gemini-3.5-flash-lite` yanıtları alındı; bu denemelerin kaydı depoda yok ve canlı model için otomatik test yoktur. Ücretsiz katman kotası (429) veya yoğunluk (503) durumunda tutor yedek moda düşer.
+- **Model prototiptir:** gerçek veri şartı karşılanmadı (0 gerçek oturum); üretim modu bu yüzden model üretmez.
 - **Tutor değerlendirmesi** (20 senaryo) yalnızca yedek motor ve otomatik puanlamayla yapıldı; canlı modelle tekrarı ve manuel inceleme eksik.
 - İstemci 8 sn sonra yedek moda geçer; sunucudaki yeniden denemeler ve ikinci model bu süreyi aşarsa öğrenci yedek yanıtı görür.
 - **Gerçek kullanıcı değerlendirmesi** yapılmadı.
@@ -179,8 +184,8 @@ public/assets/aistudio/    AI Studio'ya yüklenen spec (v2.1) ve Stitch tasarım
 
 ## Yapay zekâ araçlarının kullanımı
 
-- **Claude Code:** spec taslağı, kod, Cypress testleri, `train.py`, parite betikleri, belgeler ve demo kayıt betikleri ajan tarafından yazıldı. Hedefi (körü körüne onay riski) ajan önerdi, ben onayladım.
+- **Claude Code:** spec taslağı, kod, Cypress testleri, `train.py`, parite betikleri, belgeler ve demo kayıt betikleri ajan tarafından yazıldı. Hedefi önce ajan önerdi; denetimde hedefin ölçtüğü şeyle uyuşmadığı görülünce "riskli seçenek seçimi" olarak düzelttik.
 - **Google AI Studio (Gemini):** uygulamanın ilk iskeleti ve yayını; canlı tutor için model adı, yeniden deneme ve rozet düzeltmeleri.
 - **Google Stitch:** arayüz taslağı ve tasarım sistemi.
-- **Benim yaptıklarım:** ödev kararları ve teslim sırası; 15 veri oturumunu oynamak; canlı tutoru AI Studio'da çalıştırıp D1–D3 için denemek; tutor düğmesi çakışması gibi sorunları fark edip düzelttirmek; senaryonun fazla bariz olduğu gözlemi.
-- Ajan çıktısında yakalanan hatalar: ipucu merdiveninin cevabı sızdırması, sabit saat, recall kapısında duran ilk model.
+- **Benim yaptıklarım:** ödev kararları ve teslim sırası; 45 satırlık manuel-rastgele veriyi oluşturmak; denetimden sonra verinin sentetik etiketlenmesine, hedef değişikliğine ve oturum bazlı bölmeye karar vermek; canlı tutoru AI Studio'da çalıştırıp D1–D3 için denemek; tutor düğmesi çakışması gibi sorunları fark edip düzelttirmek; senaryonun fazla bariz olduğu gözlemi.
+- Ajan çıktısında yakalanan hatalar: ipucu merdiveninin cevabı sızdırması, sabit saat, recall kapısında duran ilk model; ayrıca manuel satırların ilk başta `gercek` etiketlenmesi ve satır bazlı bölme sızıntısı.

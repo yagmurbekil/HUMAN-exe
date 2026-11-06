@@ -1,9 +1,9 @@
 """Append reproducible synthetic sessions to data/oturumlar.csv (spec.md §12.3).
 
-Why synthetic rows are needed: the 15 real sessions were clicked through quickly, so almost no
-evidence card was opened (`kart_orani` has no variation). A model cannot learn "opening the
-evidence lowers the risk" from them. The generator encodes that hypothesis explicitly; it is an
-assumption about behaviour, not a measurement.
+All data in this project is synthetic. The 15 manually entered sessions (uretim_turu=manuel-rastgele)
+hold random answers and open almost no evidence card, so a model cannot learn "opening the evidence
+lowers the risk" from them. This generator encodes that hypothesis explicitly
+(uretim_turu=algoritmik-sentetik); it is an assumption about behaviour, not a measurement.
 
 Rule (seed 20261106, 60 sessions = 180 rows):
   dikkat ~ Beta(2, 2) per player
@@ -15,7 +15,7 @@ Rule (seed 20261106, 60 sessions = 180 rows):
                    + 0.7 * onceki_riskli + 0.4 * onceki_uyumsuz
   misaligned justification ~ Bernoulli(0.2 + 0.5 * risky)
 
-Re-running replaces earlier synthetic rows and never touches `kaynak=gercek` rows.
+Re-running replaces only the rows this generator wrote and never touches manual rows.
 """
 
 import argparse
@@ -28,6 +28,7 @@ SEED = 20261106
 CARDS = {1: 4, 2: 4, 3: 3}
 MAX_HINTS = {0: 3, 1: 2, 2: 1}
 VERSION = "sentetik-1"
+ORIGIN = "algoritmik-sentetik"
 
 
 def session(rng: np.random.Generator) -> list[dict]:
@@ -62,6 +63,7 @@ def session(rng: np.random.Generator) -> list[dict]:
             "onceki_uyumsuz": prior_misaligned,
             "riskli_secim": risky,
             "kaynak": "sentetik",
+            "uretim_turu": ORIGIN,
             "uygulama_surumu": VERSION,
         })
         prior_risky += risky
@@ -78,11 +80,11 @@ def main():
 
     path = Path(args.veri)
     data = pd.read_csv(path)
-    real = data[data["kaynak"] == "gercek"]
+    kept = data[data["uretim_turu"] != ORIGIN]
     rng = np.random.default_rng(args.tohum)
     synthetic = pd.DataFrame([r for _ in range(args.oturum) for r in session(rng)], columns=data.columns)
-    pd.concat([real, synthetic], ignore_index=True).to_csv(path, index=False, lineterminator="\n")
-    print(f"{path}: {len(real)} gercek + {len(synthetic)} sentetik satir; riskli orani (sentetik) "
+    pd.concat([kept, synthetic], ignore_index=True).to_csv(path, index=False, lineterminator="\n")
+    print(f"{path}: {len(kept)} korunan + {len(synthetic)} algoritmik satir; riskli orani (algoritmik) "
           f"{synthetic['riskli_secim'].mean():.3f}")
 
 

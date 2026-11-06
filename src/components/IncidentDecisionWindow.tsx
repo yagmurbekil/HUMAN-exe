@@ -21,7 +21,7 @@ export const IncidentDecisionWindow: React.FC<IncidentDecisionWindowProps> = ({
 }) => {
   const [selectedOptionId, setSelectedOptionId] = useState<OptionId | null>(null);
 
-  // Behaviour telemetry for the blind-acceptance model (spec.md §12)
+  // Behaviour telemetry for the risky-choice model (spec.md §12)
   const openedAtRef = useRef<number>(Date.now());
   const viewedCardsRef = useRef<Set<string>>(new Set());
   const selectionChangesRef = useRef<number>(0);

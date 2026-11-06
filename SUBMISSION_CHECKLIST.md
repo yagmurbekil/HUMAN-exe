@@ -54,13 +54,14 @@ Kontrol tarihi: 6 Kasım 2026. Teslim formu: https://forms.gle/pr9QVEfLJuaFiXw39
 | # | Gereksinim | Durum | Kanıt | Eksik |
 |---|---|---|---|---|
 | 1 | Spec, eval eşiği, 3 kabul örneği (eğitimden önce) | **VERIFIED** | `spec.md` §12 (commit `bf58914`, eğitimden önce) | — |
-| 2 | En az 15 gerçek oturum, sözlük, `kaynak` | **PARTIAL** | `data/oturumlar.csv`, `data/SOZLUK.md` | 15 oturumun hepsi tek kişi, rastgele cevap; 3 farklı oyuncu yok. Belgelerde açıkça yazıldı |
-| 3 | Tekrarlanabilir eğitim ve eval kapısı | **VERIFIED** | `train.py`, `tests/eval_kapisi.py` (4/4) | Yalnız bu makinede denendi |
+| 2a | En az 15 gerçek oturum | **MISSING** | `tests/veri_kontrol.py` (0 gerçek satır) | Gerçek oyuncu verisi yok. Yalnız sentetik veri: Veri kaleminin yarısı alınır |
+| 2b | Veri sözlüğü, `kaynak`, üretici ve tohum | **VERIFIED** | `data/oturumlar.csv`, `data/SOZLUK.md`, `scripts/veri_uret.py` | — |
+| 3 | Tekrarlanabilir eğitim ve eval kapısı | **VERIFIED** | `train.py`, `tests/eval_kapisi.py` (9/9) | Yalnız bu makinede denendi; prototip modu gerçek veri kapısını atlar ve bunu etiketler |
 | 4 | `model.onnx`, `config.json`, model kartı | **VERIFIED** | `model/` | — |
-| 5 | HF reposu, commit'e sabit URL, `RELEASE.md` | **PARTIAL** | `RELEASE.md`, `scripts/hf_yayinla.py` | Model henüz Hugging Face'e yüklenmedi: `hf auth login` gerekiyor |
-| 6 | Uygulamada çıkarım, davranış değişikliği | **VERIFIED** | `src/utils/riskModel.ts`, `DogrulaDialog.tsx`, `cypress/e2e/model.cy.ts` | Canlı AI Studio sürümüne eşitlenmeli |
+| 5 | HF reposu, commit'e sabit URL, `RELEASE.md` | **PARTIAL** | `RELEASE.md`, `scripts/hf_yayinla.py` | Model Hugging Face'e yüklenmedi; repo `human-exe-risky-choice-onnx` adına çevrilmeli, commit sabitlenmeli |
+| 6 | Uygulamada çıkarım, davranış değişikliği | **PARTIAL** | `src/utils/riskModel.ts`, `DogrulaDialog.tsx`, `cypress/e2e/model.cy.ts` | Yerelde çalışıyor; GitHub ve canlı AI Studio sürümünde henüz yok |
 | 7 | Diferansiyel test ve regresyon | **VERIFIED** | `tests/parite.py`, `tests/parite.json`, Cypress 57/57 | — |
-| 8 | 60–90 sn demo, iki oyuncu | **VERIFIED** | `docs/demo/HUMAN-exe-model-demo.mp4` (64 sn, 780×1688) | Sessiz; YouTube bağlantısı henüz yok |
+| 8 | 60–90 sn demo, iki oyuncu | **VERIFIED** | `docs/demo/HUMAN-exe-model-demo.mp4` (64 sn, 780×1688) | Sessiz, oyuncular betikli; YouTube bağlantısı henüz yok |
 | 9 | Sınav tasarımı | **VERIFIED** | `SINAV_TASARIMI.md` | Taslak ajan tarafından yazıldı, sahibi tarafından gözden geçirilmeli |
 | 10 | Ajan kullanımı beyanı | **VERIFIED** | README sonu | — |
 | B | Bonus: kendi sunucuda tüketici | **PARTIAL** | `server.ts` `/api/risk`, `model.cy.ts` | Yerelde parite geçti; canlı dağıtımda doğrulanmadı |

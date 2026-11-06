@@ -1,5 +1,5 @@
 # HUMAN.exe — The Accountability Protocol
-## SE Primer Spesifikasyonu (v2.2 — uygulanan sürüm · v3.0 model eki: §12)
+## SE Primer Spesifikasyonu (v2.2 — uygulanan sürüm · §12: sentetik veriyle model prototipi)
 
 > Bu belge bir öğrenme simülasyonunun spesifikasyonudur; gerçek operasyonel, tıbbi veya hukuki tavsiye içermez. Tüm kişiler, sistemler ve veriler kurgusaldır.
 
@@ -138,28 +138,31 @@ Seçiciler `data-cy` öznitelikleridir. "Otomatik test" sütunu yalnızca gerçe
 
 ## 11. Değerlendirme
 
-- Cypress: 6 spec, 39 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
+- Cypress: 8 spec, 57 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
 - Tutor değerlendirmesi: `eval/` altındaki 20 senaryo **yalnızca kural tabanlı yedek motorla ve otomatik anahtar kelime puanlamasıyla** çalıştırıldı (o sırada canlı Gemini HTTP 403 veriyordu). Canlı tutor sonradan AI Studio'da D1–D3 için elle denendi; 20 senaryonun canlı modelle tekrarı ve manuel anlamsal inceleme yapılmadı. Ayrıntı: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
 - 60 sn demo: [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) (otomatik tarayıcı kaydı, sessiz).
 - Gerçek kullanıcı değerlendirmesi: yapılmadı (bkz. [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md)).
 
 ---
 
-## 12. Model eki (Ödev 7 — The Primer v2): Körü körüne onay riski
+## 12. Model eki (Ödev 7 — The Primer v2): Riskli seçenek seçimi (sentetik prototip)
 
-> Bu bölüm **eğitimden önce** yazılmıştır (4 Kasım 2026). Eşik ve metrik eğitim sonuçları görüldükten sonra değiştirilmez; değişirse sürüm notunda gerekçesiyle belirtilir.
+> Metrik ve eşikler ilk olarak eğitimden önce yazıldı (4 Kasım 2026, commit `bf58914`) ve sonuç görülerek değiştirilmedi. Bu bölüm 6 Kasım 2026'da denetim bulgularına göre güncellendi; tüm sapmalar §12.6'dadır.
+
+> **Durum: gerçek veri şartı karşılanmadı.** Projede 0 gerçek oyuncu oturumu vardır. Model yalnızca sentetik veriyle eğitilmiş teknik bir prototiptir; metrikleri gerçek oyuncu performansı değildir.
 
 ### 12.1 Problem ve model gereksinimi
 
-v2.2'deki uyum sabit kurallara dayanır (seviye, rol, hedef). v3.0'da uyumun bir kısmı oyuncunun **o andaki davranışından** öğrenen küçük bir modele bağlanır.
+v2.2'deki uyum sabit kurallara dayanır (seviye, rol, hedef). v3.0 prototipi, uyumun bir kısmını oyuncunun o andaki davranış özelliklerine bağlar.
 
-**Soru:** *"Bu oyuncu bu kararı kanıtları incelemeden, ASSIST.exe'ye ya da hıza güvenerek mi veriyor?"* Bu, otomasyon yanlılığının (automation bias) davranışsal bir göstergesidir.
+**Soru:** *"Bu davranış özellikleriyle seçilen seçeneğin riskli (bayraklı) seçenek olma olasılığı nedir?"*
 
-- **Model:** ikili sınıflandırıcı, `StandardScaler` + `LogisticRegression` (`random_state=42`), `sklearn → ONNX`.
-- **Çıktı:** `p_kor_onay` ∈ [0, 1], seçilen seçeneğin riskli (bayraklı) olma olasılığı.
+- **Model:** ikili sınıflandırıcı, `StandardScaler` + `LogisticRegression` (`class_weight="balanced"`, `random_state=42`), `sklearn → ONNX`.
+- **Çıktı:** `p_riskli_secim` ∈ [0, 1]. `class_weight` nedeniyle kalibre değildir; gerçek sıklık gibi yorumlanmaz.
 - **Etiket (`riskli_secim`):** seçilen seçeneğin `flag` alanı doluysa 1 (`D1_ROLLBACK_NOW`, `D2_DEPLOY_NOW`, `D3_SHARE_RAW`), değilse 0.
 - **Çalışma anı:** oyuncu `Kararı Onayla`ya bastığı an, `JUSTIFY.dlg` açılmadan önce.
-- **Sızıntı kuralı:** seçilen seçeneğin kimliği veya metni **girdi değildir**. Model yalnızca davranışa bakar; cevabı bilmez.
+- **Sızıntı kuralı:** seçilen seçeneğin kimliği veya metni girdi değildir. `onceki_riskli` önceki satırların etiketinden türer; bu nedenle bölme oturum bazlıdır.
+- **Model ne ölçmez:** "körü körüne onay", niyet veya kanıtı okuma. D1 ve D2'de riskli seçenek ASSIST.exe önerisidir, D3'te ise öneriye karşı çıkmaktır. Bu yüzden önceki hedef adı kaldırıldı.
 
 **Girdiler** (sıra `model/config.json` sözleşmesindeki sıradır; tanım ve birimler: [`data/SOZLUK.md`](data/SOZLUK.md)):
 
@@ -171,54 +174,91 @@ v2.2'deki uyum sabit kurallara dayanır (seviye, rol, hedef). v3.0'da uyumun bir
 | 4 | `kart_orani` | Açılan farklı kanıt kartı / o karardaki toplam kart |
 | 5 | `tutor_acildi` | Bu kararda tutor açıldı mı (0/1) |
 | 6 | `ipucu_sayisi` | Bu kararda kullanılan hazır ipucu sayısı |
-| 7 | `secim_degisikligi` | Seçenekler arasında geçiş sayısı (ilk seçimden sonraki değişiklikler) |
-| 8 | `onceki_riskli` | Bu oturumdaki önceki kararlarda yapılan riskli seçim sayısı |
-| 9 | `onceki_uyumsuz` | Önceki kararlarda ilkeyle uyumsuz gerekçe sayısı |
+| 7 | `onceki_riskli` | Bu oturumdaki önceki kararlarda yapılan riskli seçim sayısı |
+| 8 | `onceki_uyumsuz` | Önceki kararlarda ilkeyle uyumsuz gerekçe sayısı |
+
+**Çıkarılan girdi: `secim_degisikligi`.** Oturum bazlı sonuç görülmeden önce çıkarıldı. Önceki modelde fikir değiştirmek olasılığı yükseltiyordu (0.743 → 0.872). Bu, `DOGRULA.dlg` sonrası kararını gerçekten gözden geçiren oyuncuyu cezalandırırdı ve üretici kuralda böyle bir etki yoktu. Sütun CSV'de durur, modele girmez.
 
 ### 12.2 Oyunun davranışını nasıl değiştirir
 
-- `p_kor_onay ≥ karar_esigi` (`config.json`, başlangıç değeri 0.5) ise `JUSTIFY.dlg`'den önce **`DOGRULA.dlg` — "Dur ve doğrula"** penceresi açılır:
+- `p_riskli_secim ≥ karar_esigi` (`config.json`, değer 0.5) ise `JUSTIFY.dlg`'den önce **`DOGRULA.dlg` — "Dur ve doğrula"** penceresi açılır:
   - incelenmemiş kanıt kartlarını listeler,
-  - tutor'dan bir Sokratik soru gösterir,
+  - modelin sentetik veriyle eğitilmiş bir prototip olduğunu belirtir,
   - iki düğme sunar: `Kararımı gözden geçir` (karar ekranına döner, seçim korunur) ve `Kararımda eminim` (`JUSTIFY.dlg`'ye geçer).
-- `p_kor_onay < karar_esigi` ise akış v2.2'deki gibidir.
-- Pencere **seçime göre değil davranışa göre** açılır. Doğru seçeneği gösterecek bir ipucu içermez; yalnızca doğrulama davranışını teşvik eder.
+- `p_riskli_secim < karar_esigi` ise akış v2.2'deki gibidir.
+- Pencere seçimi görmez. Doğru seçeneği gösteren bir ipucu içermez.
 - Kararlar, 8 yol, bayraklar, saat ve sonlar değişmez (`src/utils/rules.ts`). Model yalnızca bu ek pencerenin açılıp açılmayacağına karar verir.
 - **Veri toplama modunda** (`?veri=1`) müdahale kapalıdır; aksi hâlde model kendi eğitim verisini etkilerdi.
 
 ### 12.3 Veri
 
-- Her karar bir satır: `data/oturumlar.csv`. Sütunlar: `oturum_id`, `karar_id`, 9 girdi, `riskli_secim`, `kaynak` (`gercek` | `sentetik`), `uygulama_surumu`.
-- **Gerçek veri:** en az **15 gerçek oturum** (≥ 45 satır), en az 3 farklı oyuncu. Veri toplama modu oturum sonunda satırları tarayıcıda biriktirir ve CSV olarak indirtir; sunucuya hiçbir şey gönderilmez.
-- **KVKK:** ad, e-posta, cihaz kimliği, IP, konum, zaman damgası toplanmaz. `oturum_id` her oturumda rastgele üretilir; oyuncuyla eşleştirilemez.
-- **Sentetik veri** serbesttir; üretici kural ve tohum README'de yazılıdır, satırlar `kaynak=sentetik` ile işaretlenir.
+- Her karar bir satır: `data/oturumlar.csv`. Sütunlar: `oturum_id`, `karar_id`, 8 girdi, `secim_degisikligi`, `riskli_secim`, `kaynak`, `uretim_turu`, `uygulama_surumu`.
+- **Mevcut veri:** 225 satır, 75 oturum, tümü `kaynak=sentetik`.
 
-### 12.4 Eval metriği ve kabul eşiği (altın standart)
+| `uretim_turu` | Satır | Oturum | Nasıl üretildi |
+|---|---|---|---|
+| `manuel-rastgele` | 45 | 15 | Elle ve rastgele cevaplarla oluşturuldu. Oyuncu davranışı değildir. |
+| `algoritmik-sentetik` | 180 | 60 | `scripts/veri_uret.py`, tohum 20261106. Üretici kuralı betiğin başındadır ve bir varsayımdır. |
+
+- **Gerçek veri şartı:** en az 15 gerçek oturum (ör. 3 farklı kişi). **Karşılanmadı: 0 gerçek oturum.** Veri toplama modu hazırdır; bu modda gerçek bir kişinin oynadığı satırlar `kaynak=gercek`, `uretim_turu=oyun-oturumu` olarak üretilir.
+- **KVKK:** ad, e-posta, cihaz kimliği, IP, konum, zaman damgası toplanmaz. `oturum_id` her oturumda rastgele üretilir.
+
+### 12.4 Eval metriği ve kapılar (altın standart)
+
+**Teknik kapı** (hiçbir modda atlanamaz):
 
 | Kural | Değer |
 |---|---|
-| Bölme | Katmanlı (stratified) %70 eğitim / %30 test, `random_state=42` |
+| Bölme | **Oturum bazlı** %70 eğitim / %30 test (`GroupShuffleSplit`, `random_state=42`); ortak oturum sayısı 0 olmalı |
 | **Birincil metrik** | Test kümesinde **ROC-AUC ≥ 0.70** |
 | İkincil metrik | Riskli sınıf için duyarlılık (recall, eşik 0.5) **≥ 0.60** |
-| Taban karşılaştırması | Dengeli doğruluk (balanced accuracy), her zaman çoğunluk sınıfını tahmin eden taban modelden (0.50) yüksek olmalı |
-| Veri kapısı | En az 15 gerçek oturum yoksa eğitim durur |
+| Taban karşılaştırması | Dengeli doğruluk (balanced accuracy) > 0.50 |
 | ONNX eşdeğerliği | ONNX ve sklearn olasılıkları arasındaki fark ≤ `1e-4` |
 
-Kurallardan biri sağlanmazsa `train.py` sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` yazılmaz. **Eşiği geçmeyen model yayınlanmaz.** Metrikler `model/config.json`'a yazılır. Ayrıca yalnızca gerçek satırlardan oluşan test alt kümesinin metrikleri de raporlanır; sentetik veri sonucu şişirebilir.
+**Gerçek veri kapısı:** en az 15 `kaynak=gercek` oturum. Prototip modu bu kapıyı açmaz, yalnızca kapalı olduğunu kaydeder.
+
+| Komut | Gerçek oturum | Teknik kapı | Sonuç |
+|---|---|---|---|
+| `python train.py` | < 15 | Fark etmez | Çıkış 1, model yazılmaz |
+| `python train.py --sentetik-prototip` | < 15 | Geçti | Çıkış 0, sürüm `2.0.0-prototip`, `durum: sentetik-prototip`, `gercek_veri_kapisi: false` |
+| İki mod | Fark etmez | Kaldı | Çıkış 1, model yazılmaz, önceki model `model/` ve `public/model/` içinden kaldırılır |
+| `python train.py` | ≥ 15 | Geçti | Çıkış 0, sürüm `2.0.0`, `durum: uretim` |
+
+Metrikler `model/config.json` ve `model/eval_raporu.json` dosyalarına yazılır; üretim türüne göre ayrı raporlanır. %95 güven aralığı oturumları yeniden örnekleyerek hesaplanır.
 
 ### 12.5 Yeni kabul örnekleri
 
 | Kod | Given / When / Then | Otomatik test |
 |---|---|---|
-| **AE8** Model davranışı değiştirir | *Given* model yüklü ve veri toplama modu kapalı, *when* oyuncu tek kanıt kartını açıp 5 sn içinde onaylar ve `p_kor_onay ≥ karar_esigi` olur, *then* `JUSTIFY.dlg`'den önce `DOGRULA.dlg` açılır ve incelenmemiş kartları listeler; *when* aynı karar tüm kartlar incelenip tutor kullanılarak verilir ve `p_kor_onay < karar_esigi` olur, *then* doğrudan `JUSTIFY.dlg` açılır. | `cypress/e2e/model.cy.ts` |
-| **AE9** Parite (diferansiyel test) | *Given* `tests/parite.json` içindeki 5 referans girdi ve Python test kahininin (`tests/parite.py`) olasılıkları, *when* aynı girdiler uygulamadaki `onnxruntime-web` çıkarımına verilir, *then* her girdide `|p_uygulama − p_python| < 1e-4` olur. | `cypress/e2e/model.cy.ts` (tarayıcı ve `/api/risk`), `tests/parite.py` |
-| **AE10** Eval kapısı | *Given* test kümesinde ROC-AUC < 0.70 veya gerçek oturum sayısı < 15, *when* `python train.py` çalıştırılır, *then* betik sıfırdan farklı çıkış koduyla durur ve `model/model.onnx` oluşturulmaz. | `tests/eval_kapisi.py` |
+| **AE8** Model davranışı değiştirir | *Given* model yüklü ve veri toplama modu kapalı, *when* oyuncu tek kanıt kartını açıp hızla onaylar ve `p_riskli_secim ≥ karar_esigi` olur, *then* `JUSTIFY.dlg`'den önce `DOGRULA.dlg` açılır ve incelenmemiş kartları listeler; *when* aynı karar tüm kartlar incelenip tutor kullanılarak verilir, *then* doğrudan `JUSTIFY.dlg` açılır. | `cypress/e2e/model.cy.ts` |
+| **AE9** Parite (diferansiyel test) | *Given* `tests/parite.json` içindeki 5 referans girdi ve Python test kahininin (`tests/parite.py`) olasılıkları, *when* aynı girdiler `onnxruntime-web` çıkarımına verilir, *then* her girdide `|p_uygulama − p_python| < 1e-4` olur. | `cypress/e2e/model.cy.ts` (tarayıcı ve `/api/risk`), `tests/parite.py` |
+| **AE10** Eval kapıları | *Given* gerçek oturum sayısı < 15, *when* `python train.py` çalıştırılır, *then* betik sıfırdan farklı kodla durur ve model yazılmaz; *given* teknik kapı kapalı, *when* `--sentetik-prototip` verilir, *then* aynı şekilde durur. | `tests/eval_kapisi.py` |
 
-**Regresyon:** v2.2'nin 39 Cypress testi model devreye girdikten sonra da geçmelidir. 8 yol testi (`paths.cy.ts`) model açıkken çalışır; `DOGRULA.dlg` açılırsa oyuncu kararını korur. Sabit tıklama dizileri kullanan diğer testlerde model kapalıdır (`cypress/support/e2e.ts`).
+**Regresyon:** v2.2'nin 39 Cypress testi model eklendikten sonra da geçmelidir. 8 yol testi (`paths.cy.ts`) model açıkken çalışır; `DOGRULA.dlg` açılırsa oyuncu kararını korur. Sabit tıklama dizileri kullanan diğer eski testlerde model kapalıdır (`cypress/support/e2e.ts`).
 
-### 12.6 Uygulama sonucu ve plandan sapmalar
+### 12.6 Sapmalar ve sonuç
 
-- **Gerçek veri hedefi kısmen karşılandı.** 15 oturum (45 satır) toplandı, ancak **hepsini tek kişi (geliştirici) rastgele cevaplarla oynadı**; §12.3'teki "en az 3 farklı oyuncu" şartı karşılanmadı. Satırlar uygulamadan geldiği için `kaynak=gercek` olarak kaldı, ama gerçek kullanıcı davranışını temsil etmez.
-- **Sentetik veri eklendi:** 60 oturum, 180 satır (`scripts/veri_uret.py`, tohum 20261106). Gerçek satırlarda `kart_orani` hiç değişmediği için model, kanıt inceleme davranışını bu satırlardan öğrenemezdi.
-- **Eval kapısı ilk denemede durdu** (recall 0.5238 < 0.60). Eşik değiştirilmedi; sınıf dengesizliği için `class_weight="balanced"` eklendi. Ayrıntı: [`RELEASE.md`](RELEASE.md).
-- **Geçerleme zayıftır.** Karışık test ROC-AUC 0.7330; gerçek test satırlarında (16 satır) 0.5083. Parite, modelin her ortamda aynı hesaplandığını gösterir (doğrulama); gerçek oyuncu davranışını öğrendiğini göstermez (geçerleme).
+**İlk plandan bilinçli sapmalar (6 Kasım 2026):**
+
+| Sapma | Gerekçe |
+|---|---|
+| 45 satır `gercek` yerine `sentetik` | Elle, rastgele oluşturuldu; gerçek oyuncu oturumu değildir. Önceki etiket yanlıştı |
+| "En az 15 gerçek oturum yoksa yayın yok" kuralına `--sentetik-prototip` istisnası eklendi | Ödev sentetik veriye izin verir (Veri kaleminin yarısı alınır). Sapma bilinçlidir: çıktı prototip olarak etiketlenir, gerçek veri kapısı kapalı görünür, teknik kapı aynen geçerlidir |
+| Satır bazlı bölme yerine oturum bazlı bölme | Satır bölmesinde 75 oturumun 47'si iki kümede de vardı (68 test satırının 65'i); `onceki_riskli` etiket sızdırıyordu |
+| Hedef "körü körüne onay" yerine "riskli seçenek seçimi" | Etiket niyet ölçmez ve D3'te ASSIST.exe'ye uymak etiket 0'dır |
+| `secim_degisikligi` girdiden çıkarıldı | §12.1. Karar sonuç görülmeden verildi |
+| `class_weight="balanced"` eklendi | Satır bazlı ilk deneme recall kapısında durdu (0.5238). Eşik düşürülmedi |
+
+**Sonuç (`python train.py --sentetik-prototip`, tek çalıştırma, tohum değiştirilmedi):**
+
+| Ölçüm | Değer | Eşik |
+|---|---|---|
+| Test ROC-AUC (23 oturum, 69 satır) | 0.7898 | ≥ 0.70 |
+| %95 aralık (oturum bootstrap) | 0.6349 – 0.9097 | — |
+| Test recall | 0.8500 | ≥ 0.60 |
+| Test dengeli doğruluk | 0.7311 | > 0.50 |
+| Oturum bazlı 5 katlı CV ROC-AUC | 0.7751 | — |
+| Ortak oturum | 0 | 0 |
+| ONNX farkı | 5.94e-08 | ≤ 1e-4 |
+
+**Yorum:** Teknik kapı açıktır, gerçek veri kapısı kapalıdır. Güven aralığının alt ucu 0.70'in altındadır, yani eşiğin güvenle aşıldığı söylenemez. Skorlar modelin üretici varsayımını geri bulduğunu gösterir, gerçek oyunculara genellenemez. Eşik ve `class_weight` kararları bu verinin bir bölümü görüldükten sonra korunduğu için skor iyimser olabilir. `DOGRULA.dlg` manuel satırların %95,6'sında, algoritmik satırların %32,2'sinde açılır; pratikte hızlı oyuncuyu uyaran bir sezgiseldir. Parite doğrulamadır, geçerleme değildir.

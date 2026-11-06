@@ -1,5 +1,5 @@
 /**
- * Blind-acceptance model inference in the browser (spec.md §12.2).
+ * Risky-choice model inference in the browser (spec.md §12.2). Synthetic-data prototype.
  *
  * The app downloads the model from the commit-pinned Hugging Face URL and falls back to the copy
  * it serves itself (public/model). Any failure leaves the game unchanged: no prediction, no dialog.
@@ -8,7 +8,7 @@
 import type { InferenceSession } from 'onnxruntime-web';
 import { FEATURE_ORDER, Features } from './telemetry';
 
-export const HF_REPO = 'yagmurbekil/human-exe-blind-accept-onnx';
+export const HF_REPO = 'yagmurbekil/human-exe-risky-choice-onnx';
 /** Pinned Hugging Face commit (RELEASE.md). Never `main`: a new upload must not change a live app. */
 export const HF_COMMIT = '';
 

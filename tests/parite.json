@@ -11,11 +11,10 @@
         "kart_orani": 0.25,
         "tutor_acildi": 0,
         "ipucu_sayisi": 0,
-        "secim_degisikligi": 0,
         "onceki_riskli": 0,
         "onceki_uyumsuz": 0
       },
-      "p_python": 0.66166151
+      "p_python": 0.69485319
     },
     {
       "ad": "dikkatli_ilk_karar",
@@ -26,11 +25,10 @@
         "kart_orani": 1,
         "tutor_acildi": 1,
         "ipucu_sayisi": 2,
-        "secim_degisikligi": 1,
         "onceki_riskli": 0,
         "onceki_uyumsuz": 0
       },
-      "p_python": 0.01322946
+      "p_python": 0.01853555
     },
     {
       "ad": "riskli_gecmis_d2",
@@ -41,11 +39,10 @@
         "kart_orani": 0.25,
         "tutor_acildi": 0,
         "ipucu_sayisi": 0,
-        "secim_degisikligi": 0,
         "onceki_riskli": 1,
         "onceki_uyumsuz": 1
       },
-      "p_python": 0.88789696
+      "p_python": 0.90847409
     },
     {
       "ad": "kismi_inceleme_d2",
@@ -56,11 +53,10 @@
         "kart_orani": 0.5,
         "tutor_acildi": 0,
         "ipucu_sayisi": 0,
-        "secim_degisikligi": 1,
         "onceki_riskli": 0,
         "onceki_uyumsuz": 0
       },
-      "p_python": 0.79204524
+      "p_python": 0.6265316
     },
     {
       "ad": "riskli_gecmis_d3",
@@ -71,11 +67,10 @@
         "kart_orani": 0.667,
         "tutor_acildi": 1,
         "ipucu_sayisi": 1,
-        "secim_degisikligi": 0,
         "onceki_riskli": 2,
         "onceki_uyumsuz": 2
       },
-      "p_python": 0.32704663
+      "p_python": 0.6527741
     }
   ]
 }

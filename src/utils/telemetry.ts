@@ -1,5 +1,5 @@
 /**
- * Behaviour telemetry for the "blind acceptance" model (spec.md §12, data/SOZLUK.md)
+ * Behaviour telemetry for the risky-choice model (spec.md §12, data/SOZLUK.md)
  *
  * One row per committed decision. No personal data: no name, e-mail, device id, IP,
  * location or timestamp. The session id is random and cannot be linked to a player.
@@ -19,13 +19,15 @@ export const FEATURE_ORDER = [
   'kart_orani',
   'tutor_acildi',
   'ipucu_sayisi',
-  'secim_degisikligi',
   'onceki_riskli',
   'onceki_uyumsuz',
 ] as const;
 
 export type FeatureName = (typeof FEATURE_ORDER)[number];
 export type Features = Record<FeatureName, number>;
+
+/** Recorded for analysis but not a model input: spec.md §12.1 explains why it was removed. */
+export type RecordedFeatures = Features & { secim_degisikligi: number };
 
 /** Measured on the decision screen up to the moment "Kararı Onayla" is pressed. */
 export interface DecisionBehaviour {
@@ -34,11 +36,12 @@ export interface DecisionBehaviour {
   selectionChanges: number;
 }
 
-export interface SessionRow extends Features {
+export interface SessionRow extends RecordedFeatures {
   oturum_id: string;
   karar_id: DecisionId;
   riskli_secim: 0 | 1;
   kaynak: 'gercek' | 'sentetik';
+  uretim_turu: 'oyun-oturumu' | 'manuel-rastgele' | 'algoritmik-sentetik';
   uygulama_surumu: string;
 }
 
@@ -46,8 +49,10 @@ export const CSV_COLUMNS: (keyof SessionRow)[] = [
   'oturum_id',
   'karar_id',
   ...FEATURE_ORDER,
+  'secim_degisikligi',
   'riskli_secim',
   'kaynak',
+  'uretim_turu',
   'uygulama_surumu',
 ];
 
@@ -88,7 +93,7 @@ export function buildFeatures(args: {
   hintsUsed: number;
   priorRisky: number;
   priorMisaligned: number;
-}): Features {
+}): RecordedFeatures {
   const totalCards = args.decision.evidenceCards.length || 1;
   const viewed = new Set(args.behaviour.viewedCardIds).size;
   return {
@@ -107,7 +112,7 @@ export function buildFeatures(args: {
 export function buildRow(
   sessionId: string,
   decisionId: DecisionId,
-  features: Features,
+  features: RecordedFeatures,
   option: DecisionOption
 ): SessionRow {
   return {
@@ -115,7 +120,8 @@ export function buildRow(
     karar_id: decisionId,
     ...features,
     riskli_secim: option.flag ? 1 : 0,
-    kaynak: 'gercek',
+    kaynak: 'gercek', // only rows from a person genuinely playing the game
+    uretim_turu: 'oyun-oturumu',
     uygulama_surumu: APP_VERSION,
   };
 }

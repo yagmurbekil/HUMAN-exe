@@ -1,34 +1,70 @@
 {
+  "mod": "sentetik-prototip",
+  "gercek_oturum": 0,
+  "gercek_veri_kapisi": false,
   "satir": 225,
-  "gercek_satir": 45,
-  "sentetik_satir": 180,
-  "gercek_oturum": 15,
-  "egitim_satiri": 157,
-  "test_satiri": 68,
-  "metrikler": {
-    "roc_auc": 0.733,
-    "recall_riskli": 0.7619,
-    "dengeli_dogruluk": 0.6788,
-    "oturum_bazli_cv_auc": 0.7791,
-    "yalniz_gercek_cv_auc": 0.7976,
-    "gercek_test_satiri": 16,
-    "gercek_test_auc": 0.5083
+  "oturum": 75,
+  "uretim_turu": {
+    "algoritmik-sentetik": {
+      "satir": 180,
+      "oturum": 60
+    },
+    "manuel-rastgele": {
+      "satir": 45,
+      "oturum": 15
+    }
   },
-  "kurallar": {
-    "gercek_oturum >= 15": true,
+  "egitim": {
+    "satir": 156,
+    "oturum": 52,
+    "riskli_orani": 0.3077
+  },
+  "test": {
+    "satir": 69,
+    "oturum": 23,
+    "riskli_orani": 0.2899
+  },
+  "oturum_kesisimi": 0,
+  "metrikler": {
+    "roc_auc": 0.7898,
+    "recall_riskli": 0.85,
+    "dengeli_dogruluk": 0.7311,
+    "roc_auc_guven_95": [
+      0.6349,
+      0.9097
+    ],
+    "oturum_bazli_cv_auc": 0.7751
+  },
+  "test_uretim_turune_gore": {
+    "algoritmik-sentetik": {
+      "satir": 45,
+      "pozitif": 11,
+      "roc_auc": 0.877,
+      "recall_riskli": 0.7273,
+      "dengeli_dogruluk": 0.7754
+    },
+    "manuel-rastgele": {
+      "satir": 24,
+      "pozitif": 9,
+      "roc_auc": 0.7259,
+      "recall_riskli": 1.0,
+      "dengeli_dogruluk": 0.5667
+    }
+  },
+  "teknik_kapi": {
     "roc_auc >= 0.7": true,
     "recall_riskli >= 0.6": true,
-    "dengeli_dogruluk > 0.5": true
+    "dengeli_dogruluk > 0.5": true,
+    "oturum_kesisimi == 0": true
   },
   "katsayilar_olcekli": {
-    "seviye": 0.3326,
-    "karar_no": 0.169,
-    "karar_suresi_sn": -0.2998,
-    "kart_orani": -1.0909,
-    "tutor_acildi": -0.5854,
-    "ipucu_sayisi": -0.4067,
-    "secim_degisikligi": 0.3373,
-    "onceki_riskli": 0.1299,
-    "onceki_uyumsuz": 0.2747
+    "seviye": 0.3031,
+    "karar_no": 0.1269,
+    "karar_suresi_sn": -0.6218,
+    "kart_orani": -0.8145,
+    "tutor_acildi": -0.4491,
+    "ipucu_sayisi": -0.0683,
+    "onceki_riskli": 0.05,
+    "onceki_uyumsuz": 0.417
   }
 }
