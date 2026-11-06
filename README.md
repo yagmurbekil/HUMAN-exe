@@ -30,7 +30,7 @@ Oyuncu `Kararı Onayla`ya bastığında küçük bir lojistik regresyon, davran�
 | Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı, `eval_raporu.json`), [Hugging Face (commit'e sabit)](https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/tree/f951b553cadf21305206cd67d9ce4174e68210dd) |
 | Yayın, rollback, ödünleşim | [`RELEASE.md`](RELEASE.md) |
 | Parite | [`tests/parite.py`](tests/parite.py), [`tests/parite.json`](tests/parite.json) |
-| Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz, betikli oyuncular) |
+| Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz, betikli oyuncular), YouTube: https://youtube.com/shorts/aH_yIwhV720 |
 | Sınav tasarımı | [`SINAV_TASARIMI.md`](SINAV_TASARIMI.md) |
 
 **Modeli yeniden üretmek (3 komut):**

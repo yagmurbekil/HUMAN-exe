@@ -57,7 +57,7 @@ Betik ([`scripts/record-demo.ts`](../../scripts/record-demo.ts)) videoyu `docs/d
 
 ## Ödev 7 demosu: aynı sahne, iki oyuncu
 
-[`HUMAN-exe-model-demo.mp4`](HUMAN-exe-model-demo.mp4): 64 sn, 780×1688 px, H.264, **sessiz**, altyazılı. Otomatik tarayıcı kaydıdır; yerel sunucudan alındı, oyuncular betikle sürülür, gerçek kişi değildir. Model yalnızca sentetik veriyle eğitilmiş bir prototiptir.
+[`HUMAN-exe-model-demo.mp4`](HUMAN-exe-model-demo.mp4) · YouTube: https://youtube.com/shorts/aH_yIwhV720 : 64 sn, 780×1688 px, H.264, **sessiz**, altyazılı. Otomatik tarayıcı kaydıdır; yerel sunucudan alındı, oyuncular betikle sürülür, gerçek kişi değildir. Model yalnızca sentetik veriyle eğitilmiş bir prototiptir.
 
 - **Oyuncu A:** tek kart, birkaç saniye, tutor yok. Model `p ≥ 0.5` verir, `DOGRULA.dlg` açılır.
 - **Oyuncu B:** aynı profil, aynı sahne, aynı seçim; tüm kartları açar ve tutordan ipucu alır. Model `p < 0.5` verir, doğrudan `JUSTIFY.dlg` açılır.

@@ -61,7 +61,7 @@ Kontrol tarihi: 6 Kasım 2026. Teslim formu: https://forms.gle/pr9QVEfLJuaFiXw39
 | 5 | HF reposu, commit'e sabit URL, `RELEASE.md` | **VERIFIED** | `RELEASE.md`, https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/resolve/f951b553cadf21305206cd67d9ce4174e68210dd/model.onnx | Yayınlanan dosyalar yerel dosyalarla aynı (SHA-256). Shadow/Canary yalnız plan |
 | 6 | Uygulamada çıkarım, davranış değişikliği | **PARTIAL** | `src/utils/riskModel.ts`, `DogrulaDialog.tsx`, `cypress/e2e/model.cy.ts` | Yerelde çalışıyor; GitHub ve canlı AI Studio sürümünde henüz yok |
 | 7 | Diferansiyel test ve regresyon | **VERIFIED** | `tests/parite.py`, `tests/parite.json`, Cypress 58/58 | — |
-| 8 | 60–90 sn demo, iki oyuncu | **VERIFIED** | `docs/demo/HUMAN-exe-model-demo.mp4` (64 sn, 780×1688) | Sessiz, oyuncular betikli; YouTube bağlantısı henüz yok |
+| 8 | 60–90 sn demo, iki oyuncu | **VERIFIED** | `docs/demo/HUMAN-exe-model-demo.mp4` (64 sn, 780×1688) | Sessiz, oyuncular betikli. YouTube: https://youtube.com/shorts/aH_yIwhV720 |
 | 9 | Sınav tasarımı | **VERIFIED** | `SINAV_TASARIMI.md` | Taslak ajan tarafından yazıldı, sahibi tarafından gözden geçirilmeli |
 | 10 | Ajan kullanımı beyanı | **VERIFIED** | README sonu | — |
 | B | Bonus: kendi sunucuda tüketici | **PARTIAL** | `server.ts` `/api/risk`, `model.cy.ts` | Yerelde parite geçti; canlı dağıtımda doğrulanmadı |
