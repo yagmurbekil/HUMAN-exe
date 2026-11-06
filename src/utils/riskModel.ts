@@ -10,7 +10,7 @@ import { FEATURE_ORDER, Features } from './telemetry';
 
 export const HF_REPO = 'yagmurbekil/human-exe-risky-choice-onnx';
 /** Pinned Hugging Face commit (RELEASE.md). Never `main`: a new upload must not change a live app. */
-export const HF_COMMIT = '';
+export const HF_COMMIT = 'f951b553cadf21305206cd67d9ce4174e68210dd';
 
 const OFF_KEY = 'humanexe.modelKapali';
 

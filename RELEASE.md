@@ -4,10 +4,10 @@
 |---|---|
 | Sürüm | `v2.0-prototip` (`model/config.json` → `version: 2.0.0-prototip`, `durum: sentetik-prototip`) |
 | Gerçek veri kapısı | **Kapalı**: 0 gerçek oturum. Yalnız sentetik veriyle teknik prototip |
-| Yayın durumu | Hugging Face üzerinde henüz yok |
+| Yayın durumu | Hugging Face üzerinde yayınlandı (sentetik prototip) |
 | Model reposu | https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx |
-| Sabitlenmiş commit | `HF_COMMIT_BEKLIYOR` |
-| Tüketici URL'si | `https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/resolve/HF_COMMIT_BEKLIYOR/model.onnx` |
+| Sabitlenmiş commit | `f951b553cadf21305206cd67d9ce4174e68210dd` |
+| Tüketici URL'si | `https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/resolve/f951b553cadf21305206cd67d9ce4174e68210dd/model.onnx` |
 
 Tüketiciler `main` dalını değil bu commit'i kullanır (`src/utils/riskModel.ts` → `HF_COMMIT`). Böylece Hub'a yeni dosya yüklemek canlı uygulamayı değiştirmez; sürüm değişikliği her zaman kod incelemesinden geçen bir commit'tir (Sommerville Bl. 25, konfigürasyon yönetimi).
 

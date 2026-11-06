@@ -26,6 +26,14 @@ describe('HUMAN.exe — Risky-choice prototype model (spec.md §12)', () => {
       });
     });
 
+    it('browser loads the commit-pinned model from Hugging Face', () => {
+      cy.intercept('GET', '**/resolve/*/model.onnx').as('hubModel');
+      cy.visit('/?parite=1');
+      cy.get('[data-cy="hesapla"]').click();
+      cy.wait('@hubModel', { timeout: 20000 }).its('request.url').should('not.include', '/resolve/main/');
+      cy.get('[data-cy="model-kaynak"]', { timeout: 20000 }).should('contain.text', 'huggingface');
+    });
+
     it('server rejects a request that breaks the input contract', () => {
       cy.request({ method: 'POST', url: '/api/risk', body: { girdi: { seviye: 0 } }, failOnStatusCode: false })
         .its('status')

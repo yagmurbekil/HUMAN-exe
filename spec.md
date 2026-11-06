@@ -138,7 +138,7 @@ Seçiciler `data-cy` öznitelikleridir. "Otomatik test" sütunu yalnızca gerçe
 
 ## 11. Değerlendirme
 
-- Cypress: 8 spec, 57 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
+- Cypress: 8 spec, 58 test; sonuçlar ve çalıştırma koşulları [`README.md`](README.md#testler).
 - Tutor değerlendirmesi: `eval/` altındaki 20 senaryo **yalnızca kural tabanlı yedek motorla ve otomatik anahtar kelime puanlamasıyla** çalıştırıldı (o sırada canlı Gemini HTTP 403 veriyordu). Canlı tutor sonradan AI Studio'da D1–D3 için elle denendi; 20 senaryonun canlı modelle tekrarı ve manuel anlamsal inceleme yapılmadı. Ayrıntı: [`eval/EVALUATION_STATUS.md`](eval/EVALUATION_STATUS.md).
 - 60 sn demo: [`docs/demo/HUMAN-exe-demo.mp4`](docs/demo/HUMAN-exe-demo.mp4) (otomatik tarayıcı kaydı, sessiz).
 - Gerçek kullanıcı değerlendirmesi: yapılmadı (bkz. [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md)).

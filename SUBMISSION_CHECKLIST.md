@@ -58,9 +58,9 @@ Kontrol tarihi: 6 Kasım 2026. Teslim formu: https://forms.gle/pr9QVEfLJuaFiXw39
 | 2b | Veri sözlüğü, `kaynak`, üretici ve tohum | **VERIFIED** | `data/oturumlar.csv`, `data/SOZLUK.md`, `scripts/veri_uret.py` | — |
 | 3 | Tekrarlanabilir eğitim ve eval kapısı | **VERIFIED** | `train.py`, `tests/eval_kapisi.py` (9/9) | Yalnız bu makinede denendi; prototip modu gerçek veri kapısını atlar ve bunu etiketler |
 | 4 | `model.onnx`, `config.json`, model kartı | **VERIFIED** | `model/` | — |
-| 5 | HF reposu, commit'e sabit URL, `RELEASE.md` | **PARTIAL** | `RELEASE.md`, `scripts/hf_yayinla.py` | Model Hugging Face'e yüklenmedi; repo `human-exe-risky-choice-onnx` adına çevrilmeli, commit sabitlenmeli |
+| 5 | HF reposu, commit'e sabit URL, `RELEASE.md` | **VERIFIED** | `RELEASE.md`, https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/resolve/f951b553cadf21305206cd67d9ce4174e68210dd/model.onnx | Yayınlanan dosyalar yerel dosyalarla aynı (SHA-256). Shadow/Canary yalnız plan |
 | 6 | Uygulamada çıkarım, davranış değişikliği | **PARTIAL** | `src/utils/riskModel.ts`, `DogrulaDialog.tsx`, `cypress/e2e/model.cy.ts` | Yerelde çalışıyor; GitHub ve canlı AI Studio sürümünde henüz yok |
-| 7 | Diferansiyel test ve regresyon | **VERIFIED** | `tests/parite.py`, `tests/parite.json`, Cypress 57/57 | — |
+| 7 | Diferansiyel test ve regresyon | **VERIFIED** | `tests/parite.py`, `tests/parite.json`, Cypress 58/58 | — |
 | 8 | 60–90 sn demo, iki oyuncu | **VERIFIED** | `docs/demo/HUMAN-exe-model-demo.mp4` (64 sn, 780×1688) | Sessiz, oyuncular betikli; YouTube bağlantısı henüz yok |
 | 9 | Sınav tasarımı | **VERIFIED** | `SINAV_TASARIMI.md` | Taslak ajan tarafından yazıldı, sahibi tarafından gözden geçirilmeli |
 | 10 | Ajan kullanımı beyanı | **VERIFIED** | README sonu | — |

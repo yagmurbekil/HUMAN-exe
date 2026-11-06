@@ -27,7 +27,7 @@ Oyuncu `Kararı Onayla`ya bastığında küçük bir lojistik regresyon, davran�
 |---|---|
 | Spec, metrik, kapılar, sapmalar | [`spec.md` §12](spec.md) |
 | Veri | [`data/oturumlar.csv`](data/oturumlar.csv), [`data/SOZLUK.md`](data/SOZLUK.md) |
-| Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı, `eval_raporu.json`) |
+| Model | [`model/`](model/) (`model.onnx`, `config.json`, model kartı, `eval_raporu.json`), [Hugging Face (commit'e sabit)](https://huggingface.co/yagmurbekil/human-exe-risky-choice-onnx/tree/f951b553cadf21305206cd67d9ce4174e68210dd) |
 | Yayın, rollback, ödünleşim | [`RELEASE.md`](RELEASE.md) |
 | Parite | [`tests/parite.py`](tests/parite.py), [`tests/parite.json`](tests/parite.json) |
 | Demo | [`docs/demo/HUMAN-exe-model-demo.mp4`](docs/demo/HUMAN-exe-model-demo.mp4) (64 sn, sessiz, betikli oyuncular) |
@@ -127,11 +127,11 @@ TutorWindow (istemci)
 
 ## Testler
 
-Cypress: 8 spec dosyası, 57 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
+Cypress: 8 spec dosyası, 58 test (`cypress/e2e/`). LLM çağrıları `cy.intercept` ile stub'lanır; testler gerçek model kalitesini ölçmez.
 
 | Spec | Test | Kapsam |
 |---|---|---|
-| `model.cy.ts` | 15 | Python, tarayıcı ve sunucu paritesi (5 referans, tolerans 1e-4), `DOGRULA.dlg` davranışı, model inmezse oyunun sürmesi, veri modunda modelin kapalı olması |
+| `model.cy.ts` | 16 | Python, tarayıcı ve sunucu paritesi (5 referans, tolerans 1e-4), modelin commit'e sabit Hugging Face URL'sinden yüklenmesi, `DOGRULA.dlg` davranışı, model inmezse oyunun sürmesi, veri modunda modelin kapalı olması |
 | `data-collection.cy.ts` | 3 | Veri satırları, kişisel veri olmaması, menü anahtarı |
 | `onboarding.cy.ts` | 2 | Profil doğrulaması, profil rozeti, QA için sabitlenen kart |
 | `paths.cy.ts` | 8 | 8 karar yolunun son, bayrak ve adım adım saati; onaylı yeniden başlatma |
@@ -140,7 +140,7 @@ Cypress: 8 spec dosyası, 57 test (`cypress/e2e/`). LLM çağrıları `cy.interc
 | `rules.cy.ts` | 3 | Kural modülü: 8 yolun bayrak, son ve saati (`cypress/fixtures/paths.json`) |
 | `tutor.cy.ts` | 2 | İpucu merdiveni, stub'lı canlı yanıt, `JUSTIFY.dlg` açıkken tutor kilidi |
 
-**Son yerel çalıştırma (6 Kasım 2026):** `npm run lint` ✔, `npm run build` ✔, Cypress **57/57 geçti** (Electron, headless; API anahtarsız), `tests/veri_kontrol.py` 10/10, `tests/eval_kapisi.py` 9/9, `tests/parite.py --kontrol` geçti (en büyük fark 4.5e-09). `paths.cy.ts` model açıkken çalışır; canlı Gemini Cypress'te stub'lanır.
+**Son yerel çalıştırma (6 Kasım 2026):** `npm run lint` ✔, `npm run build` ✔, Cypress **58/58 geçti** (Electron, headless; API anahtarsız), `tests/veri_kontrol.py` 10/10, `tests/eval_kapisi.py` 9/9, `tests/parite.py --kontrol` geçti (en büyük fark 4.5e-09). `paths.cy.ts` model açıkken çalışır; canlı Gemini Cypress'te stub'lanır.
 
 **Otomatik testi olmayanlar:** sızdıran model yanıtıyla guard E2E testi (AE5), profil değişmezliği, `JUSTIFY.dlg` için Esc/arka plan davranışı, tablet görünümü.
 
